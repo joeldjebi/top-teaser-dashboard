@@ -7,6 +7,25 @@ type SuperAdminBootstrapFormProps = {
   onCreated: (email: string) => void
 }
 
+function getCreationErrorMessage(error: unknown) {
+  if (error instanceof ApiError) {
+    const details =
+      typeof error.details === 'object' && error.details !== null
+        ? JSON.stringify(error.details)
+        : String(error.details ?? '')
+
+    return details && details !== error.message
+      ? `${error.message} Détails : ${details}`
+      : error.message
+  }
+
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return String(error)
+}
+
 export function SuperAdminBootstrapForm({
   onCreated,
 }: SuperAdminBootstrapFormProps) {
@@ -32,11 +51,8 @@ export function SuperAdminBootstrapForm({
       await createSuperAdminAccount({ name, email, password })
       onCreated(email)
     } catch (creationError) {
-      setError(
-        creationError instanceof ApiError
-          ? creationError.message
-          : 'Création impossible pour le moment.',
-      )
+      console.error('[SuperAdminBootstrap] Création impossible:', creationError)
+      setError(getCreationErrorMessage(creationError))
     } finally {
       setIsSubmitting(false)
     }
