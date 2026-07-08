@@ -1,5 +1,11 @@
 import { apiRequest } from '../../../lib/apiClient'
-import type { AdminUser, AuthSession, LoginCredentials } from '../types'
+import type {
+  AdminUser,
+  AuthSession,
+  BootstrapStatus,
+  CreateSuperAdminPayload,
+  LoginCredentials,
+} from '../types'
 
 type ApiData<T> = {
   data: T
@@ -10,6 +16,20 @@ export function login(credentials: LoginCredentials) {
     method: 'POST',
     body: JSON.stringify(credentials),
   })
+}
+
+export function fetchBootstrapStatus() {
+  return apiRequest<ApiData<BootstrapStatus>>('/api/auth/bootstrap-status')
+}
+
+export function createSuperAdminAccount(payload: CreateSuperAdminPayload) {
+  return apiRequest<ApiData<AdminUser> & { message: string }>(
+    '/api/auth/bootstrap-super-admin',
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    },
+  )
 }
 
 export function fetchCurrentUser(token: string) {

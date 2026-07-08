@@ -127,6 +127,35 @@
   gap: 18px;
 }
 
+.bootstrap-form {
+  gap: 14px;
+}
+
+.bootstrap-note,
+.auth-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bootstrap-note {
+  border: 1px solid #ccfbf1;
+  border-radius: 8px;
+  padding: 12px;
+  color: #0f766e;
+  background: #f0fdfa;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.auth-switch {
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .field {
   display: grid;
   gap: 8px;

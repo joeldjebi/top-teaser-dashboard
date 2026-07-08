@@ -36,3 +36,13 @@ export type LoginCredentials = {
   email: string
   password: string
 }
+
+export type BootstrapStatus = {
+  canCreateSuperAdmin: boolean
+}
+
+export type CreateSuperAdminPayload = {
+  name: string
+  email: string
+  password: string
+}
