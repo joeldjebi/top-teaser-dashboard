@@ -1,6 +1,6 @@
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ??
-  'http://localhost:4000'
+  configuredApiBaseUrl ?? (import.meta.env.DEV ? 'http://localhost:4000' : '')
 
 type ApiClientOptions = RequestInit & {
   token?: string | null
