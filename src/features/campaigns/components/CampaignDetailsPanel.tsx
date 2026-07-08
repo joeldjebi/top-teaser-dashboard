@@ -3,11 +3,13 @@ import { Pagination } from '../../../shared/pagination/Pagination'
 import { usePagination } from '../../../shared/pagination/usePagination'
 import type {
   Campaign,
+  CampaignChannelStatus,
   CampaignRecipient,
   CampaignStats,
 } from '../types/campaignTypes'
 
 type CampaignDetailsPanelProps = {
+  channelStatuses?: CampaignChannelStatus[]
   campaign: Campaign | null
   isSyncingBulkStatus?: boolean
   onSyncBulkStatus?: (campaign: Campaign) => void
@@ -16,6 +18,7 @@ type CampaignDetailsPanelProps = {
 }
 
 export function CampaignDetailsPanel({
+  channelStatuses = [],
   campaign,
   isSyncingBulkStatus = false,
   onSyncBulkStatus,
@@ -90,6 +93,40 @@ export function CampaignDetailsPanel({
         ))}
       </div>
 
+      {channelStatuses.length > 0 ? (
+        <div className="recipient-list">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Canaux</p>
+              <h2>Statuts multicanaux</h2>
+            </div>
+          </div>
+          <div className="channel-status-grid">
+            {channelStatuses.map((channel) => (
+              <article className="channel-status-card" key={channel.id}>
+                <div>
+                  <strong>{formatChannelLabel(channel.channel)}</strong>
+                  <span>{channel.providerName ?? 'Provider email actif'}</span>
+                </div>
+                <span className={`status-pill ${channel.status}`}>
+                  {channel.status}
+                </span>
+                <div className="channel-status-stats">
+                  <span>Envoyés {channel.stats.sent}</span>
+                  <span>En attente {channel.stats.pending}</span>
+                  <span>Échecs {channel.stats.failed}</span>
+                </div>
+                {channel.errorMessage ? (
+                  <small className="recipient-error-message">
+                    {channel.errorMessage}
+                  </small>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div className="recipient-list">
         <div className="panel-heading">
           <div>
@@ -137,4 +174,15 @@ export function CampaignDetailsPanel({
       </div>
     </section>
   )
+}
+
+function formatChannelLabel(channel: CampaignChannelStatus['channel']) {
+  const labels: Record<CampaignChannelStatus['channel'], string> = {
+    email: 'Email',
+    sms: 'SMS',
+    whatsapp: 'WhatsApp',
+    telegram: 'Telegram',
+  }
+
+  return labels[channel]
 }

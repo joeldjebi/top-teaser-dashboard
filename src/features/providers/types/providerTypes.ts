@@ -5,12 +5,15 @@ export type MailProviderKey =
   | 'brevo'
   | 'amazon-ses'
 
+export type CommunicationChannel = 'email' | 'sms' | 'whatsapp' | 'telegram'
+
 export type MailProviderHealth = {
   configured: boolean
   missingConfig: string[]
 }
 
 export type MailProvider = {
+  channel?: CommunicationChannel
   key: MailProviderKey
   name: string
   active: boolean
@@ -75,4 +78,40 @@ export type ProviderSettingsFormValues = {
   provider: MailProviderKey
   from: string
   config: Record<string, string>
+}
+
+export type CommunicationProviderVariable = {
+  key: string
+  label: string
+  secret: boolean
+  required: boolean
+  value?: string
+}
+
+export type CommunicationProviderLimits = {
+  maxPerMinute: number
+  maxPerHour: number
+  maxPerDay: number
+  batchSize: number
+}
+
+export type CommunicationProvider = {
+  id: number
+  channel: Exclude<CommunicationChannel, 'email'>
+  name: string
+  providerKey: string
+  isActive: boolean
+  variables: CommunicationProviderVariable[]
+  limits: CommunicationProviderLimits
+  createdAt: string
+  updatedAt: string
+}
+
+export type CommunicationProviderPayload = {
+  channel: Exclude<CommunicationChannel, 'email'>
+  name: string
+  providerKey: string
+  isActive: boolean
+  variables: CommunicationProviderVariable[]
+  limits: CommunicationProviderLimits
 }

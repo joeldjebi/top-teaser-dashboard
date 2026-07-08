@@ -1,6 +1,8 @@
 import { apiRequest } from '../../../lib/apiClient'
 import type {
   ActiveMailProvider,
+  CommunicationProvider,
+  CommunicationProviderPayload,
   MailSettings,
   MailSettingsPayload,
   MailProvider,
@@ -46,5 +48,50 @@ export function updateMailSettings(
     method: 'PATCH',
     token,
     body: JSON.stringify(payload),
+  })
+}
+
+export function fetchCommunicationProviders(token: string) {
+  return apiRequest<ApiData<CommunicationProvider[]>>(
+    '/api/communication-providers',
+    {
+      token,
+    },
+  )
+}
+
+export function createCommunicationProvider(
+  token: string,
+  payload: CommunicationProviderPayload,
+) {
+  return apiRequest<ApiData<CommunicationProvider>>(
+    '/api/communication-providers',
+    {
+      method: 'POST',
+      token,
+      body: JSON.stringify(payload),
+    },
+  )
+}
+
+export function updateCommunicationProvider(
+  token: string,
+  providerId: number,
+  payload: Partial<CommunicationProviderPayload>,
+) {
+  return apiRequest<ApiData<CommunicationProvider>>(
+    `/api/communication-providers/${providerId}`,
+    {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify(payload),
+    },
+  )
+}
+
+export function deleteCommunicationProvider(token: string, providerId: number) {
+  return apiRequest<null>(`/api/communication-providers/${providerId}`, {
+    method: 'DELETE',
+    token,
   })
 }

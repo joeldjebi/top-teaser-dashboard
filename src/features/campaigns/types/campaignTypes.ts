@@ -9,6 +9,19 @@ export type CampaignStatus =
   | 'cancelled'
 
 export type CampaignSendMode = 'single' | 'bulk'
+export type CampaignChannel = 'email' | 'sms' | 'whatsapp' | 'telegram'
+
+export type CampaignChannelConfig = {
+  id?: number
+  campaignId?: number
+  channel: CampaignChannel
+  communicationProviderId: number | null
+  sendMode: CampaignSendMode
+  status?: CampaignStatus
+  errorMessage?: string | null
+  createdAt?: string
+  updatedAt?: string
+}
 
 export type CampaignRecipientStatus =
   | 'pending'
@@ -25,7 +38,10 @@ export type Campaign = {
   subject: string
   templateId: number
   contactListId: number
+  channel: CampaignChannel
+  communicationProviderId: number | null
   sendMode: CampaignSendMode
+  channels: CampaignChannelConfig[]
   status: CampaignStatus
   errorMessage: string | null
   scheduledAt: string | null
@@ -40,8 +56,17 @@ export type CampaignPayload = {
   subject: string
   templateId: number
   contactListId: number
+  channel?: CampaignChannel
+  communicationProviderId?: number | null
   sendMode?: CampaignSendMode
+  channels?: CampaignChannelConfig[]
   scheduledAt?: string | null
+}
+
+export type CampaignChannelFormState = {
+  enabled: boolean
+  communicationProviderId: string
+  sendMode: CampaignSendMode
 }
 
 export type CampaignFormValues = {
@@ -49,7 +74,7 @@ export type CampaignFormValues = {
   subject: string
   templateId: string
   contactListId: string
-  sendMode: CampaignSendMode
+  channels: Record<CampaignChannel, CampaignChannelFormState>
   scheduledAt: string
 }
 
@@ -62,6 +87,29 @@ export type CampaignStats = {
   opened: number
   clicked: number
   unsubscribed: number
+}
+
+export type CampaignChannelStatus = {
+  id: number
+  channel: CampaignChannel
+  providerName: string | null
+  status: CampaignStatus
+  errorMessage: string | null
+  stats: {
+    pending: number
+    sent: number
+    failed: number
+    bounced: number
+    opened: number
+    clicked: number
+    unsubscribed: number
+  }
+}
+
+export type CampaignSendQueuedResult = {
+  campaign: Campaign
+  jobId: string
+  message: string
 }
 
 export type CampaignBulkStatus = {

@@ -32,7 +32,6 @@ export type ContactFormValues = {
   mobileNumber: string
   commune: string
   country: string
-  status: ContactStatus
 }
 
 export type ContactImportRowStatus = 'imported' | 'duplicate' | 'invalid'

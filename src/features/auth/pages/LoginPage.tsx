@@ -1,10 +1,11 @@
 import { LoginForm } from '../components/LoginForm'
+import { BrandLogo } from '../../../shared/brand/BrandLogo'
 
 export function LoginPage() {
   return (
     <div className="auth-card">
       <div className="brand-row">
-        <div className="brand-mark">TT</div>
+        <BrandLogo className="brand-logo-auth" />
         <div>
           <p className="eyebrow">Top Teaser</p>
           <h1>Administration email</h1>

@@ -14,6 +14,8 @@ import { useConfirmDialog } from '../../../shared/confirm/ConfirmDialogProvider'
 import { Pagination } from '../../../shared/pagination/Pagination'
 import { usePagination } from '../../../shared/pagination/usePagination'
 import { useAuth } from '../../auth/AuthProvider'
+import { fetchCountries } from '../../locations/api/locationsApi'
+import type { Country } from '../../locations/types/locationTypes'
 import {
   createContact,
   deleteContact,
@@ -48,6 +50,7 @@ export function ContactsPage() {
   const { token } = useAuth()
   const { confirm } = useConfirmDialog()
   const [contacts, setContacts] = useState<Contact[]>([])
+  const [countries, setCountries] = useState<Country[]>([])
   const [editingContact, setEditingContact] = useState<Contact | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -82,9 +85,21 @@ export function ContactsPage() {
     }
   }, [token])
 
+  const loadCountries = useCallback(async () => {
+    if (!token) return
+
+    try {
+      const { data } = await fetchCountries(token)
+      setCountries(data)
+    } catch {
+      setCountries([])
+    }
+  }, [token])
+
   useEffect(() => {
     void loadContacts()
-  }, [loadContacts])
+    void loadCountries()
+  }, [loadContacts, loadCountries])
 
   const stats = useMemo(() => {
     const active = contacts.filter((contact) => contact.status === 'active').length
@@ -397,6 +412,7 @@ export function ContactsPage() {
             </button>
             <ContactFormPanel
               contact={editingContact}
+              countries={countries}
               isSubmitting={isSubmitting}
               onCancel={() => {
                 setEditingContact(null)

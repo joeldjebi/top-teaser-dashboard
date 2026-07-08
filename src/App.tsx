@@ -1,18 +1,21 @@
 import { AuthProvider, useAuth } from './features/auth/AuthProvider'
+import { AcceptInvitePage } from './features/auth/pages/AcceptInvitePage'
 import { LoginPage } from './features/auth/pages/LoginPage'
 import { AdminShell } from './layouts/AdminShell'
 import { AuthLayout } from './layouts/AuthLayout'
+import { BrandLogo } from './shared/brand/BrandLogo'
 import { ConfirmDialogProvider } from './shared/confirm/ConfirmDialogProvider'
 import './App.css'
 
 function AppContent() {
   const { isAuthenticated, isBootstrapping } = useAuth()
+  const isAcceptInvitePage = window.location.pathname === '/accept-invite'
 
   if (isBootstrapping) {
     return (
       <AuthLayout>
         <div className="auth-card">
-          <div className="brand-mark">TT</div>
+          <BrandLogo className="brand-logo-loading" />
           <p className="muted">Chargement de la session...</p>
         </div>
       </AuthLayout>
@@ -22,7 +25,7 @@ function AppContent() {
   if (!isAuthenticated) {
     return (
       <AuthLayout>
-        <LoginPage />
+        {isAcceptInvitePage ? <AcceptInvitePage /> : <LoginPage />}
       </AuthLayout>
     )
   }

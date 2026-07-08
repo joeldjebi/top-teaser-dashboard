@@ -2,8 +2,10 @@ import { apiRequest } from '../../../lib/apiClient'
 import type {
   Campaign,
   CampaignBulkStatus,
+  CampaignChannelStatus,
   CampaignPayload,
   CampaignRecipient,
+  CampaignSendQueuedResult,
   CampaignStats,
 } from '../types/campaignTypes'
 
@@ -54,9 +56,7 @@ export function prepareCampaign(token: string, campaignId: number) {
 }
 
 export function sendCampaign(token: string, campaignId: number) {
-  return apiRequest<
-    ApiData<{ campaign: Campaign; sent: number; failed: number; stats: CampaignStats }>
-  >(`/api/campaigns/${campaignId}/send`, {
+  return apiRequest<ApiData<CampaignSendQueuedResult>>(`/api/campaigns/${campaignId}/send`, {
     method: 'POST',
     token,
   })
@@ -85,6 +85,15 @@ export function fetchCampaignStats(token: string, campaignId: number) {
   return apiRequest<ApiData<CampaignStats>>(`/api/campaigns/${campaignId}/stats`, {
     token,
   })
+}
+
+export function fetchCampaignChannelStatuses(token: string, campaignId: number) {
+  return apiRequest<ApiData<CampaignChannelStatus[]>>(
+    `/api/campaigns/${campaignId}/channel-statuses`,
+    {
+      token,
+    },
+  )
 }
 
 export function fetchCampaignRecipients(token: string, campaignId: number) {

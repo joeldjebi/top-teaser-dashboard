@@ -18,6 +18,12 @@ import { ApiError } from '../../../lib/apiClient'
 import { useAuth } from '../../auth/AuthProvider'
 import { fetchCampaigns } from '../../campaigns/api/campaignsApi'
 import type { Campaign } from '../../campaigns/types/campaignTypes'
+import {
+  buildPipelineChannelData,
+  buildPipelineStatusData,
+  PipelineChannelChart,
+  PipelineStatusChart,
+} from '../../campaignPipeline/components/PipelineCharts'
 import { fetchContactLists } from '../../contactLists/api/contactListsApi'
 import type { ContactList } from '../../contactLists/types/contactListTypes'
 import { fetchContacts } from '../../contacts/api/contactsApi'
@@ -28,12 +34,17 @@ import { fetchActiveMailProvider } from '../../providers/api/providersApi'
 import type { ActiveMailProvider } from '../../providers/types/providerTypes'
 import { fetchTemplates } from '../../templates/api/templatesApi'
 import type { EmailTemplate } from '../../templates/types/templateTypes'
+import {
+  fetchMonitoringOverview,
+  type MonitoringOverview,
+} from '../api/monitoringApi'
 
 type OverviewData = {
   campaigns: Campaign[]
   contactLists: ContactList[]
   contacts: Contact[]
   logs: EmailLog[]
+  monitoring: MonitoringOverview | null
   provider: ActiveMailProvider | null
   templates: EmailTemplate[]
 }
@@ -43,6 +54,7 @@ const emptyData: OverviewData = {
   contactLists: [],
   contacts: [],
   logs: [],
+  monitoring: null,
   provider: null,
   templates: [],
 }
@@ -75,6 +87,7 @@ export function OverviewPage() {
         templatesResponse,
         campaignsResponse,
         logsResponse,
+        monitoringResponse,
         providerResponse,
       ] = await Promise.all([
         fetchContacts(token),
@@ -82,6 +95,7 @@ export function OverviewPage() {
         fetchTemplates(token),
         fetchCampaigns(token),
         fetchEmailLogs(token),
+        fetchMonitoringOverview(token),
         fetchActiveMailProvider(token).catch(() => ({ data: null })),
       ])
 
@@ -90,6 +104,7 @@ export function OverviewPage() {
         contactLists: listsResponse.data,
         contacts: contactsResponse.data,
         logs: logsResponse.data,
+        monitoring: monitoringResponse.data,
         provider: providerResponse.data,
         templates: templatesResponse.data,
       })
@@ -174,6 +189,15 @@ export function OverviewPage() {
           )}
         </div>
 
+        <div className="overview-panel">
+          <PanelTitle
+            icon={Send}
+            title="Pipeline campagnes"
+            eyebrow="Opérations"
+          />
+          <PipelineStatusChart items={computed.pipelineStatusData} />
+        </div>
+
         <div className="overview-panel overview-provider-panel">
           <PanelTitle icon={RadioTower} title="Provider actif" eyebrow="Email" />
           <div className="provider-health-card">
@@ -208,11 +232,38 @@ export function OverviewPage() {
 
       <section className="overview-secondary-grid">
         <div className="overview-panel">
+          <PanelTitle icon={RadioTower} title="Monitoring" eyebrow="Système" />
+          <div className="overview-mini-list">
+            <MiniRow
+              label="Scheduler"
+              value={data.monitoring?.scheduler.isRunning ? 'Actif' : 'Arrêté'}
+            />
+            <MiniRow
+              label="Queue"
+              value={`${data.monitoring?.scheduler.queue.queued ?? 0} en attente`}
+            />
+            <MiniRow
+              label="Canaux en erreur"
+              value={data.monitoring?.channelsByStatus.failed ?? 0}
+            />
+            <MiniRow
+              label="Campagnes bloquées"
+              value={data.monitoring?.blockedCampaigns.length ?? 0}
+            />
+          </div>
+        </div>
+
+        <div className="overview-panel">
           <PanelTitle icon={Activity} title="Qualité de la base" eyebrow="Contacts" />
           <DonutChart
             items={computed.contactStatusBreakdown}
             total={data.contacts.length}
           />
+        </div>
+
+        <div className="overview-panel">
+          <PanelTitle icon={RadioTower} title="Canaux utilisés" eyebrow="Pipeline" />
+          <PipelineChannelChart items={computed.pipelineChannelData} />
         </div>
 
         <div className="overview-panel">
@@ -335,6 +386,8 @@ function buildOverviewMetrics(data: OverviewData) {
     deliveryRate,
     failedLogs,
     lastSevenDays,
+    pipelineChannelData: buildPipelineChannelData(data.campaigns),
+    pipelineStatusData: buildPipelineStatusData(data.campaigns),
     readyCampaigns,
     recentCampaigns,
     sendingCampaigns,

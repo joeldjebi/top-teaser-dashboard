@@ -14,8 +14,8 @@ export function TemplatePresetGallery({
     <section className="preset-gallery">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Designs prêts</p>
-          <h2>Templates premium</h2>
+          <p className="eyebrow">Modèles prêts</p>
+          <h2>Templates légers</h2>
         </div>
       </div>
 

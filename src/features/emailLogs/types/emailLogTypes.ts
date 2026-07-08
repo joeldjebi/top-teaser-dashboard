@@ -13,3 +13,18 @@ export type EmailLog = {
   createdAt: string
   updatedAt: string
 }
+
+export type TechnicalLog = {
+  id: number
+  level: 'debug' | 'info' | 'warning' | 'error'
+  scope: string
+  event: string
+  message: string
+  campaignId: number | null
+  campaignChannelId: number | null
+  provider: string | null
+  payload: unknown
+  response: unknown
+  error: string | null
+  createdAt: string
+}

@@ -203,7 +203,7 @@ export function TemplatesPage() {
     })
     setPreview(null)
     setIsFormModalOpen(true)
-    setSuccess(`Le design « ${preset.name} » est chargé dans l’éditeur.`)
+    setSuccess(`Le modèle léger « ${preset.name} » est chargé dans l’éditeur.`)
     setError(null)
   }
 
@@ -218,10 +218,11 @@ export function TemplatesPage() {
       <section className="page-hero compact-hero">
         <div>
           <p className="eyebrow">Templates</p>
-          <h1>Des emails cohérents, rapides à personnaliser.</h1>
+          <h1>Des emails légers, simples à personnaliser.</h1>
           <p className="muted">
-            Créez vos modèles avec variables dynamiques : {'{{fullName}}'},
-            {' {{commune}}'}, {'{{country}}'}, {'{{email}}'}.
+            Remplissez le contenu, l’application génère un HTML propre avec
+            version texte et variables : {'{{fullName}}'}, {' {{commune}}'},
+            {' {{country}}'}, {'{{email}}'}.
           </p>
         </div>
         <div className="hero-actions">
@@ -254,7 +255,7 @@ export function TemplatesPage() {
         </div>
         <div className="insight-card">
           <Sparkles size={20} />
-          <span>HTML prêts</span>
+          <span>Templates légers</span>
           <strong>{totalHtml}</strong>
         </div>
         <div className="insight-card">

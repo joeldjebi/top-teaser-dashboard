@@ -1,10 +1,10 @@
 import { Save, X } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import type { Country } from '../../locations/types/locationTypes'
 import type {
   Contact,
   ContactFormValues,
   ContactPayload,
-  ContactStatus,
 } from '../types/contactTypes'
 
 const defaultValues: ContactFormValues = {
@@ -13,11 +13,11 @@ const defaultValues: ContactFormValues = {
   mobileNumber: '',
   commune: '',
   country: '',
-  status: 'active',
 }
 
 type ContactFormPanelProps = {
   contact: Contact | null
+  countries: Country[]
   isSubmitting: boolean
   onCancel: () => void
   onSubmit: (payload: ContactPayload) => Promise<void>
@@ -25,11 +25,22 @@ type ContactFormPanelProps = {
 
 export function ContactFormPanel({
   contact,
+  countries,
   isSubmitting,
   onCancel,
   onSubmit,
 }: ContactFormPanelProps) {
   const [values, setValues] = useState<ContactFormValues>(defaultValues)
+  const selectedCountry = useMemo(
+    () => countries.find((country) => country.name === values.country) ?? null,
+    [countries, values.country],
+  )
+  const hasCurrentCountryOption = countries.some(
+    (country) => country.name === values.country,
+  )
+  const hasCurrentCommuneOption = Boolean(
+    selectedCountry?.communes.some((commune) => commune.name === values.commune),
+  )
 
   useEffect(() => {
     if (!contact) {
@@ -43,7 +54,6 @@ export function ContactFormPanel({
       mobileNumber: contact.mobileNumber ?? '',
       commune: contact.commune ?? '',
       country: contact.country ?? '',
-      status: contact.status,
     })
   }, [contact])
 
@@ -52,10 +62,10 @@ export function ContactFormPanel({
     await onSubmit({
       email: values.email,
       fullName: values.fullName || null,
-      mobileNumber: values.mobileNumber || null,
+      mobileNumber: values.mobileNumber,
       commune: values.commune || null,
       country: values.country || null,
-      status: values.status,
+      status: contact ? undefined : 'active',
     })
 
     if (!contact) {
@@ -70,6 +80,14 @@ export function ContactFormPanel({
     setValues((current) => ({
       ...current,
       [key]: value,
+    }))
+  }
+
+  function updateCountry(countryName: string) {
+    setValues((current) => ({
+      ...current,
+      country: countryName,
+      commune: '',
     }))
   }
 
@@ -94,7 +112,7 @@ export function ContactFormPanel({
 
       <form className="stack-form" onSubmit={handleSubmit}>
         <label className="field">
-        <span>Adresse email</span>
+          <span>Adresse email *</span>
           <input
             onChange={(event) => updateField('email', event.target.value)}
             placeholder="client@example.com"
@@ -116,10 +134,11 @@ export function ContactFormPanel({
           </label>
 
           <label className="field">
-            <span>Numéro mobile</span>
+            <span>Numéro mobile *</span>
             <input
               onChange={(event) => updateField('mobileNumber', event.target.value)}
               placeholder="+225 07 00 00 00 00"
+              required
               type="tel"
               value={values.mobileNumber}
             />
@@ -129,39 +148,43 @@ export function ContactFormPanel({
         <div className="split-fields">
           <label className="field">
             <span>Commune</span>
-            <input
+            <select
+              disabled={!selectedCountry}
               onChange={(event) => updateField('commune', event.target.value)}
-              placeholder="Cocody"
-              type="text"
               value={values.commune}
-            />
+            >
+              <option value="">
+                {selectedCountry ? 'Sélectionner une commune' : 'Choisir un pays'}
+              </option>
+              {values.commune && !hasCurrentCommuneOption ? (
+                <option value={values.commune}>{values.commune}</option>
+              ) : null}
+              {selectedCountry?.communes.map((commune) => (
+                <option key={commune.id} value={commune.name}>
+                  {commune.name}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="field">
             <span>Pays</span>
-            <input
-              onChange={(event) => updateField('country', event.target.value)}
-              placeholder="Côte d’Ivoire"
-              type="text"
+            <select
+              onChange={(event) => updateCountry(event.target.value)}
               value={values.country}
-            />
+            >
+              <option value="">Sélectionner un pays</option>
+              {values.country && !hasCurrentCountryOption ? (
+                <option value={values.country}>{values.country}</option>
+              ) : null}
+              {countries.map((country) => (
+                <option key={country.id} value={country.name}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
-
-        <label className="field">
-          <span>Statut</span>
-          <select
-            onChange={(event) =>
-              updateField('status', event.target.value as ContactStatus)
-            }
-            value={values.status}
-          >
-            <option value="active">Actif</option>
-            <option value="invalid">Invalide</option>
-            <option value="bounced">Bounce</option>
-            <option value="unsubscribed">Désabonné</option>
-          </select>
-        </label>
 
         <button className="primary-button" disabled={isSubmitting} type="submit">
           <Save size={18} />

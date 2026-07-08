@@ -1,18 +1,31 @@
-import { Save, X } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { Save, WandSparkles, X } from 'lucide-react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import type {
   EmailTemplate,
   TemplateFormValues,
   TemplatePayload,
 } from '../types/templateTypes'
+import { buildLightweightTemplate } from '../utils/lightweightTemplateBuilder'
 
-const defaultValues: TemplateFormValues = {
+type GuidedTemplateValues = {
+  name: string
+  subject: string
+  title: string
+  message: string
+  ctaLabel: string
+  ctaUrl: string
+  signature: string
+}
+
+const defaultValues: GuidedTemplateValues = {
   name: '',
-  subject: '',
-  htmlContent:
-    '<h1>Bonjour {{fullName}}</h1><p>Nous avons une nouvelle information pour vous à {{commune}}.</p>',
-  textContent:
-    'Bonjour {{fullName}}, nous avons une nouvelle information pour vous à {{commune}}.',
+  subject: 'Bonjour {{fullName}}, une information pour vous',
+  title: 'Bonjour {{fullName}},',
+  message:
+    'Nous avons une information utile à partager avec vous à {{commune}}.\n\nAjoutez ici votre message principal en restant clair, court et direct.',
+  ctaLabel: '',
+  ctaUrl: '',
+  signature: 'L’équipe Top Teaser',
 }
 
 type TemplateFormPanelProps = {
@@ -23,6 +36,35 @@ type TemplateFormPanelProps = {
   template: EmailTemplate | null
 }
 
+function valuesFromTemplate(template: EmailTemplate): GuidedTemplateValues {
+  return {
+    ...defaultValues,
+    name: template.name,
+    subject: template.subject,
+    title: template.subject,
+    message:
+      template.textContent?.replace(/Se désabonner\s*:\s*\{\{unsubscribeUrl\}\}/g, '').trim() ||
+      'Ajoutez ici votre message principal.',
+  }
+}
+
+function valuesFromPreset(initialValues?: TemplateFormValues): GuidedTemplateValues {
+  if (!initialValues) {
+    return defaultValues
+  }
+
+  return {
+    ...defaultValues,
+    name: initialValues.name,
+    subject: initialValues.subject,
+    title: initialValues.subject,
+    message:
+      initialValues.textContent
+        ?.replace(/Se désabonner\s*:\s*\{\{unsubscribeUrl\}\}/g, '')
+        .trim() || defaultValues.message,
+  }
+}
+
 export function TemplateFormPanel({
   initialValues,
   isSubmitting,
@@ -30,29 +72,31 @@ export function TemplateFormPanel({
   onSubmit,
   template,
 }: TemplateFormPanelProps) {
-  const [values, setValues] = useState<TemplateFormValues>(defaultValues)
+  const [values, setValues] = useState<GuidedTemplateValues>(defaultValues)
 
   useEffect(() => {
-    if (!template) {
-      setValues(initialValues ?? defaultValues)
-      return
-    }
-
-    setValues({
-      name: template.name,
-      subject: template.subject,
-      htmlContent: template.htmlContent,
-      textContent: template.textContent ?? '',
-    })
+    setValues(template ? valuesFromTemplate(template) : valuesFromPreset(initialValues))
   }, [initialValues, template])
+
+  const generated = useMemo(
+    () =>
+      buildLightweightTemplate({
+        title: values.title,
+        message: values.message,
+        ctaLabel: values.ctaLabel,
+        ctaUrl: values.ctaUrl,
+        signature: values.signature,
+      }),
+    [values.ctaLabel, values.ctaUrl, values.message, values.signature, values.title],
+  )
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     await onSubmit({
       name: values.name,
       subject: values.subject,
-      htmlContent: values.htmlContent,
-      textContent: values.textContent || null,
+      htmlContent: generated.html,
+      textContent: generated.text,
     })
 
     if (!template) {
@@ -60,9 +104,9 @@ export function TemplateFormPanel({
     }
   }
 
-  function updateField<Key extends keyof TemplateFormValues>(
+  function updateField<Key extends keyof GuidedTemplateValues>(
     key: Key,
-    value: TemplateFormValues[Key],
+    value: GuidedTemplateValues[Key],
   ) {
     setValues((current) => ({
       ...current,
@@ -74,7 +118,7 @@ export function TemplateFormPanel({
     <aside className="template-form-panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Template</p>
+          <p className="eyebrow">Éditeur guidé</p>
           <h2>{template ? 'Modifier le template' : 'Nouveau template'}</h2>
         </div>
         {template ? (
@@ -90,6 +134,14 @@ export function TemplateFormPanel({
       </div>
 
       <form className="stack-form" onSubmit={handleSubmit}>
+        <div className="template-deliverability-note">
+          <WandSparkles size={18} />
+          <span>
+            HTML léger généré automatiquement, version texte incluse et lien de
+            désabonnement conservé.
+          </span>
+        </div>
+
         <label className="field">
           <span>Nom du template</span>
           <input
@@ -111,24 +163,56 @@ export function TemplateFormPanel({
         </label>
 
         <label className="field">
-          <span>Contenu HTML</span>
-          <textarea
-            className="code-textarea"
-            onChange={(event) => updateField('htmlContent', event.target.value)}
+          <span>Titre visible dans l’email</span>
+          <input
+            onChange={(event) => updateField('title', event.target.value)}
             required
-            rows={9}
-            value={values.htmlContent}
+            value={values.title}
           />
         </label>
 
         <label className="field">
-          <span>Version texte</span>
+          <span>Message</span>
           <textarea
-            onChange={(event) => updateField('textContent', event.target.value)}
-            rows={5}
-            value={values.textContent}
+            onChange={(event) => updateField('message', event.target.value)}
+            required
+            rows={8}
+            value={values.message}
           />
         </label>
+
+        <div className="split-fields">
+          <label className="field">
+            <span>Bouton</span>
+            <input
+              onChange={(event) => updateField('ctaLabel', event.target.value)}
+              placeholder="Voir l’offre"
+              value={values.ctaLabel}
+            />
+          </label>
+          <label className="field">
+            <span>Lien du bouton</span>
+            <input
+              onChange={(event) => updateField('ctaUrl', event.target.value)}
+              placeholder="https://example.com"
+              type="url"
+              value={values.ctaUrl}
+            />
+          </label>
+        </div>
+
+        <label className="field">
+          <span>Signature</span>
+          <input
+            onChange={(event) => updateField('signature', event.target.value)}
+            value={values.signature}
+          />
+        </label>
+
+        <div className="template-generated-preview">
+          <span>Poids estimé</span>
+          <strong>{new Blob([generated.html]).size.toLocaleString('fr-FR')} octets</strong>
+        </div>
 
         <button className="primary-button" disabled={isSubmitting} type="submit">
           <Save size={18} />

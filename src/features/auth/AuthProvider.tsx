@@ -22,6 +22,7 @@ type AuthContextValue = {
   isBootstrapping: boolean
   loginAdmin: (credentials: LoginCredentials) => Promise<void>
   logoutAdmin: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -77,6 +78,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [token])
 
+  const refreshUser = useCallback(async () => {
+    if (!token) return
+    const { data } = await fetchCurrentUser(token)
+    setUser(data)
+    storeSession({ token, user: data })
+  }, [token])
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -85,8 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isBootstrapping,
       loginAdmin,
       logoutAdmin,
+      refreshUser,
     }),
-    [isBootstrapping, loginAdmin, logoutAdmin, token, user],
+    [isBootstrapping, loginAdmin, logoutAdmin, refreshUser, token, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

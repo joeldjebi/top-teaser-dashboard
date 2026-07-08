@@ -1,5 +1,5 @@
 import { apiRequest } from '../../../lib/apiClient'
-import type { EmailLog } from '../types/emailLogTypes'
+import type { EmailLog, TechnicalLog } from '../types/emailLogTypes'
 
 type ApiData<T> = {
   data: T
@@ -13,6 +13,12 @@ export function fetchEmailLogs(token: string) {
 
 export function fetchEmailLog(token: string, logId: number) {
   return apiRequest<ApiData<EmailLog>>(`/api/email-logs/${logId}`, {
+    token,
+  })
+}
+
+export function fetchTechnicalLogs(token: string) {
+  return apiRequest<ApiData<TechnicalLog[]>>('/api/technical-logs?limit=500', {
     token,
   })
 }
