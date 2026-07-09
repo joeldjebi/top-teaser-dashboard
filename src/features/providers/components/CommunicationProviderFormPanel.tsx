@@ -37,7 +37,10 @@ function getDefaultVariables(
     whatsapp: [
       { key: 'base_url', label: 'URL API', required: true, secret: false, value: 'https://api.wassenger.com/v1' },
       { key: 'api_token', label: 'Token API Wassenger', required: true, secret: true, value: '' },
-      { key: 'device_id', label: 'Device ID WhatsApp', required: true, secret: true, value: '' },
+      { key: 'device_id', label: 'Device ID Wassenger', required: true, secret: false, value: '' },
+      { key: 'waba_template_name', label: 'Template WABA approuvé', required: false, secret: false, value: '' },
+      { key: 'waba_template_language', label: 'Langue du template', required: false, secret: false, value: 'fr' },
+      { key: 'waba_template_body_variables', label: 'Variables du template', required: false, secret: false, value: 'fullName,commune,country' },
       { key: 'media_file_id', label: 'Fichier média Wassenger', required: false, secret: false, value: '' },
     ],
     telegram: [
@@ -78,6 +81,29 @@ function getProviderKeyPlaceholder(channel: Exclude<CommunicationChannel, 'email
   }
 
   return placeholders[channel]
+}
+
+function isValidProviderConfig(values: CommunicationProviderPayload) {
+  if (
+    values.channel !== 'whatsapp' ||
+    values.providerKey.trim().toLowerCase() !== 'wassenger'
+  ) {
+    return true
+  }
+
+  const deviceId =
+    values.variables
+      .find((variable) => variable.key.trim() === 'device_id')
+      ?.value?.trim() ?? ''
+
+  if (/^[0-9A-Fa-f]{24}$/.test(deviceId)) {
+    return true
+  }
+
+  window.alert(
+    'Device ID Wassenger invalide. Il doit contenir exactement 24 caractères hexadécimaux. Exemple : 64f1a2b3c4d5e6f7890abc12.',
+  )
+  return false
 }
 
 export function CommunicationProviderFormPanel({
@@ -131,6 +157,9 @@ export function CommunicationProviderFormPanel({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!isValidProviderConfig(values)) {
+      return
+    }
     await onSubmit(values)
   }
 
@@ -219,6 +248,18 @@ export function CommunicationProviderFormPanel({
               Ajouter
             </button>
           </div>
+
+          {values.channel === 'whatsapp' &&
+          values.providerKey.trim().toLowerCase() === 'wassenger' ? (
+            <div className="form-alert neutral-alert">
+              Le Device ID Wassenger doit être l’identifiant du device WhatsApp,
+              composé de 24 caractères hexadécimaux. Exemple :
+              64f1a2b3c4d5e6f7890abc12. Il se copie depuis Wassenger, section
+              Devices. Pour écrire à un contact hors fenêtre 24h, renseignez un
+              template WABA approuvé et ses variables, exemple :
+              fullName,commune,country ou 0=fullName,1=commune.
+            </div>
+          ) : null}
 
           {values.variables.map((variable, index) => (
             <div className="provider-variable-row" key={index}>

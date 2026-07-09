@@ -22,3 +22,10 @@ export function fetchTechnicalLogs(token: string) {
     token,
   })
 }
+
+export function clearTechnicalLogs(token: string) {
+  return apiRequest<ApiData<{ technicalLogs: number }>>('/api/technical-logs', {
+    method: 'DELETE',
+    token,
+  })
+}

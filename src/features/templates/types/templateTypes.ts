@@ -1,5 +1,8 @@
+export type TemplateChannel = 'email' | 'sms' | 'whatsapp' | 'telegram'
+
 export type EmailTemplate = {
   id: number
+  channel: TemplateChannel
   name: string
   subject: string
   htmlContent: string
@@ -9,6 +12,7 @@ export type EmailTemplate = {
 }
 
 export type TemplatePayload = {
+  channel: TemplateChannel
   name: string
   subject: string
   htmlContent: string
@@ -16,6 +20,7 @@ export type TemplatePayload = {
 }
 
 export type TemplateFormValues = {
+  channel: TemplateChannel
   name: string
   subject: string
   htmlContent: string

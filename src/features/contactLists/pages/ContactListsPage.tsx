@@ -4,6 +4,7 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  Trash2,
   UsersRound,
   X,
 } from 'lucide-react'
@@ -17,6 +18,7 @@ import { fetchContacts } from '../../contacts/api/contactsApi'
 import type { Contact } from '../../contacts/types/contactTypes'
 import {
   addContactToList,
+  clearContactLists,
   createContactList,
   deleteContactList,
   fetchContactList,
@@ -203,6 +205,42 @@ export function ContactListsPage() {
     }
   }
 
+  async function handleClearContactLists() {
+    if (!token) return
+
+    const shouldClear = await confirm({
+      title: 'Vider les catégories de contacts ?',
+      description:
+        'Toutes les listes seront supprimées. Les campagnes rattachées à ces listes seront aussi supprimées pour respecter les dépendances de la base. Les contacts resteront dans la base.',
+      confirmLabel: 'Vider les catégories',
+      variant: 'danger',
+    })
+
+    if (!shouldClear) return
+
+    setError(null)
+    setSuccess(null)
+    setIsBusy(true)
+
+    try {
+      const { data } = await clearContactLists(token)
+      setContactLists([])
+      setSelectedList(null)
+      setEditingList(null)
+      setSuccess(
+        `${data.contactLists} catégorie(s) et ${data.campaigns} campagne(s) rattachée(s) supprimée(s).`,
+      )
+    } catch (clearError) {
+      setError(
+        clearError instanceof ApiError
+          ? clearError.message
+          : 'Impossible de vider les catégories de contacts.',
+      )
+    } finally {
+      setIsBusy(false)
+    }
+  }
+
   async function handleAddContact(contact: Contact) {
     if (!token || !selectedList) {
       return
@@ -300,6 +338,15 @@ export function ContactListsPage() {
           <button className="secondary-button" onClick={loadData} type="button">
             <RefreshCw size={18} />
             Actualiser
+          </button>
+          <button
+            className="secondary-button danger-action"
+            disabled={contactLists.length === 0 || isBusy}
+            onClick={handleClearContactLists}
+            type="button"
+          >
+            <Trash2 size={18} />
+            Vider
           </button>
         </div>
       </section>

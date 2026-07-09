@@ -2,12 +2,14 @@ import { Save, WandSparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import type {
   EmailTemplate,
+  TemplateChannel,
   TemplateFormValues,
   TemplatePayload,
 } from '../types/templateTypes'
 import { buildLightweightTemplate } from '../utils/lightweightTemplateBuilder'
 
 type GuidedTemplateValues = {
+  channel: TemplateChannel
   name: string
   subject: string
   title: string
@@ -18,6 +20,7 @@ type GuidedTemplateValues = {
 }
 
 const defaultValues: GuidedTemplateValues = {
+  channel: 'email',
   name: '',
   subject: 'Bonjour {{fullName}}, une information pour vous',
   title: 'Bonjour {{fullName}},',
@@ -39,6 +42,7 @@ type TemplateFormPanelProps = {
 function valuesFromTemplate(template: EmailTemplate): GuidedTemplateValues {
   return {
     ...defaultValues,
+    channel: template.channel,
     name: template.name,
     subject: template.subject,
     title: template.subject,
@@ -55,6 +59,7 @@ function valuesFromPreset(initialValues?: TemplateFormValues): GuidedTemplateVal
 
   return {
     ...defaultValues,
+    channel: initialValues.channel,
     name: initialValues.name,
     subject: initialValues.subject,
     title: initialValues.subject,
@@ -63,6 +68,17 @@ function valuesFromPreset(initialValues?: TemplateFormValues): GuidedTemplateVal
         ?.replace(/Se désabonner\s*:\s*\{\{unsubscribeUrl\}\}/g, '')
         .trim() || defaultValues.message,
   }
+}
+
+function getDefaultSubject(channel: TemplateChannel) {
+  const subjects: Record<TemplateChannel, string> = {
+    email: 'Message email',
+    sms: 'Message SMS',
+    whatsapp: 'Message WhatsApp',
+    telegram: 'Message Telegram',
+  }
+
+  return subjects[channel]
 }
 
 export function TemplateFormPanel({
@@ -92,11 +108,15 @@ export function TemplateFormPanel({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const message = values.message.trim()
+    const isEmail = values.channel === 'email'
+
     await onSubmit({
+      channel: values.channel,
       name: values.name,
-      subject: values.subject,
-      htmlContent: generated.html,
-      textContent: generated.text,
+      subject: values.subject || getDefaultSubject(values.channel),
+      htmlContent: isEmail ? generated.html : message,
+      textContent: isEmail ? generated.text : message,
     })
 
     if (!template) {
@@ -137,10 +157,27 @@ export function TemplateFormPanel({
         <div className="template-deliverability-note">
           <WandSparkles size={18} />
           <span>
-            HTML léger généré automatiquement, version texte incluse et lien de
-            désabonnement conservé.
+            {values.channel === 'email'
+              ? 'HTML léger généré automatiquement, version texte incluse et lien de désabonnement conservé.'
+              : 'Message texte court, optimisé pour SMS, WhatsApp ou Telegram avec variables contact.'}
           </span>
         </div>
+
+        <label className="field">
+          <span>Canal du template</span>
+          <select
+            onChange={(event) =>
+              updateField('channel', event.target.value as TemplateChannel)
+            }
+            required
+            value={values.channel}
+          >
+            <option value="email">Email</option>
+            <option value="sms">SMS</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="telegram">Telegram</option>
+          </select>
+        </label>
 
         <label className="field">
           <span>Nom du template</span>
@@ -153,7 +190,11 @@ export function TemplateFormPanel({
         </label>
 
         <label className="field">
-          <span>Objet de l’email</span>
+          <span>
+            {values.channel === 'email'
+              ? 'Objet de l’email'
+              : 'Titre interne du message'}
+          </span>
           <input
             onChange={(event) => updateField('subject', event.target.value)}
             placeholder="Bonjour {{fullName}}, une offre pour vous"
@@ -162,14 +203,16 @@ export function TemplateFormPanel({
           />
         </label>
 
-        <label className="field">
-          <span>Titre visible dans l’email</span>
-          <input
-            onChange={(event) => updateField('title', event.target.value)}
-            required
-            value={values.title}
-          />
-        </label>
+        {values.channel === 'email' ? (
+          <label className="field">
+            <span>Titre visible dans l’email</span>
+            <input
+              onChange={(event) => updateField('title', event.target.value)}
+              required
+              value={values.title}
+            />
+          </label>
+        ) : null}
 
         <label className="field">
           <span>Message</span>
@@ -181,37 +224,45 @@ export function TemplateFormPanel({
           />
         </label>
 
-        <div className="split-fields">
-          <label className="field">
-            <span>Bouton</span>
-            <input
-              onChange={(event) => updateField('ctaLabel', event.target.value)}
-              placeholder="Voir l’offre"
-              value={values.ctaLabel}
-            />
-          </label>
-          <label className="field">
-            <span>Lien du bouton</span>
-            <input
-              onChange={(event) => updateField('ctaUrl', event.target.value)}
-              placeholder="https://example.com"
-              type="url"
-              value={values.ctaUrl}
-            />
-          </label>
-        </div>
+        {values.channel === 'email' ? (
+          <>
+            <div className="split-fields">
+              <label className="field">
+                <span>Bouton</span>
+                <input
+                  onChange={(event) => updateField('ctaLabel', event.target.value)}
+                  placeholder="Voir l’offre"
+                  value={values.ctaLabel}
+                />
+              </label>
+              <label className="field">
+                <span>Lien du bouton</span>
+                <input
+                  onChange={(event) => updateField('ctaUrl', event.target.value)}
+                  placeholder="https://example.com"
+                  type="url"
+                  value={values.ctaUrl}
+                />
+              </label>
+            </div>
 
-        <label className="field">
-          <span>Signature</span>
-          <input
-            onChange={(event) => updateField('signature', event.target.value)}
-            value={values.signature}
-          />
-        </label>
+            <label className="field">
+              <span>Signature</span>
+              <input
+                onChange={(event) => updateField('signature', event.target.value)}
+                value={values.signature}
+              />
+            </label>
+          </>
+        ) : null}
 
         <div className="template-generated-preview">
-          <span>Poids estimé</span>
-          <strong>{new Blob([generated.html]).size.toLocaleString('fr-FR')} octets</strong>
+          <span>{values.channel === 'email' ? 'Poids estimé' : 'Longueur'}</span>
+          <strong>
+            {values.channel === 'email'
+              ? `${new Blob([generated.html]).size.toLocaleString('fr-FR')} octets`
+              : `${values.message.length.toLocaleString('fr-FR')} caractères`}
+          </strong>
         </div>
 
         <button className="primary-button" disabled={isSubmitting} type="submit">

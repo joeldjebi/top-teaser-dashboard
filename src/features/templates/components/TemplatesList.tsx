@@ -30,7 +30,7 @@ export function TemplatesList({
       {templates.map((template) => (
         <article className="template-card" key={template.id}>
           <div>
-            <p className="eyebrow">Email</p>
+            <p className="eyebrow">{formatTemplateChannel(template.channel)}</p>
             <h3>{template.name}</h3>
             <p>{template.subject}</p>
           </div>
@@ -43,14 +43,16 @@ export function TemplatesList({
             >
               <Eye size={17} />
             </button>
-            <button
-              className="icon-button soft"
-              onClick={() => onTestSend(template)}
-              title="Envoi test"
-              type="button"
-            >
-              <Send size={17} />
-            </button>
+            {template.channel === 'email' ? (
+              <button
+                className="icon-button soft"
+                onClick={() => onTestSend(template)}
+                title="Envoi test"
+                type="button"
+              >
+                <Send size={17} />
+              </button>
+            ) : null}
             <button
               className="icon-button soft"
               onClick={() => onEdit(template)}
@@ -72,4 +74,15 @@ export function TemplatesList({
       ))}
     </div>
   )
+}
+
+function formatTemplateChannel(channel: EmailTemplate['channel']) {
+  const labels: Record<EmailTemplate['channel'], string> = {
+    email: 'Email',
+    sms: 'SMS',
+    whatsapp: 'WhatsApp',
+    telegram: 'Telegram',
+  }
+
+  return labels[channel]
 }

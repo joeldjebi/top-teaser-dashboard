@@ -6,6 +6,7 @@ import {
   RefreshCw,
   Search,
   Send,
+  Trash2,
   X,
   ArrowLeft,
 } from 'lucide-react'
@@ -35,6 +36,7 @@ import { fetchTemplates } from '../../templates/api/templatesApi'
 import type { EmailTemplate } from '../../templates/types/templateTypes'
 import {
   cancelCampaign,
+  clearCampaigns,
   createCampaign,
   deleteCampaign,
   fetchCampaignRecipients,
@@ -468,6 +470,41 @@ export function CampaignsPage() {
     }
   }
 
+  async function handleClearCampaigns() {
+    if (!token) return
+
+    const shouldClear = await confirm({
+      title: 'Vider toutes les campagnes ?',
+      description:
+        'Toutes les campagnes, leurs canaux, destinataires préparés et suivis liés seront supprimés. Cette action est définitive.',
+      confirmLabel: 'Vider les campagnes',
+      variant: 'danger',
+    })
+
+    if (!shouldClear) return
+
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const { data } = await clearCampaigns(token)
+      setCampaigns([])
+      setSelectedCampaign(null)
+      setSelectedStats(null)
+      setSelectedChannelStatuses([])
+      setSelectedRecipients([])
+      setEditingCampaign(null)
+      setSendProgress(null)
+      setSuccess(`${data.campaigns} campagne(s) supprimée(s).`)
+    } catch (clearError) {
+      setError(
+        clearError instanceof ApiError
+          ? clearError.message
+          : 'Impossible de vider les campagnes.',
+      )
+    }
+  }
+
   function replaceCampaign(campaign: Campaign) {
     setCampaigns((current) =>
       current.map((candidate) =>
@@ -551,6 +588,15 @@ export function CampaignsPage() {
           <button className="secondary-button" onClick={loadCampaigns} type="button">
             <RefreshCw size={18} />
             Actualiser
+          </button>
+          <button
+            className="secondary-button danger-action"
+            disabled={campaigns.length === 0}
+            onClick={handleClearCampaigns}
+            type="button"
+          >
+            <Trash2 size={18} />
+            Vider
           </button>
         </div>
       </section>

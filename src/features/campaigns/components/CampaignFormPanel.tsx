@@ -25,21 +25,25 @@ const defaultValues: CampaignFormValues = {
     email: {
       enabled: true,
       communicationProviderId: '',
+      templateId: '',
       sendMode: 'single',
     },
     sms: {
       enabled: false,
       communicationProviderId: '',
+      templateId: '',
       sendMode: 'single',
     },
     whatsapp: {
       enabled: false,
       communicationProviderId: '',
+      templateId: '',
       sendMode: 'single',
     },
     telegram: {
       enabled: false,
       communicationProviderId: '',
+      templateId: '',
       sendMode: 'single',
     },
   },
@@ -69,10 +73,8 @@ export function CampaignFormPanel({
 }: CampaignFormPanelProps) {
   const [values, setValues] = useState<CampaignFormValues>(defaultValues)
   const selectedTemplate = useMemo(
-    () =>
-      templates.find((template) => String(template.id) === values.templateId) ??
-      null,
-    [templates, values.templateId],
+    () => getPreviewTemplate(values, templates),
+    [templates, values],
   )
   const previewHtml = useMemo(
     () =>
@@ -106,11 +108,12 @@ export function CampaignFormPanel({
     event.preventDefault()
     const channels = buildChannelPayload(values)
     const primaryChannel = getPrimaryChannel(channels)
+    const primaryTemplateId = primaryChannel.templateId ?? Number(values.templateId)
 
     await onSubmit({
       name: values.name,
       subject: values.subject,
-      templateId: Number(values.templateId),
+      templateId: primaryTemplateId,
       contactListId: Number(values.contactListId),
       channel: primaryChannel.channel,
       communicationProviderId: primaryChannel.communicationProviderId,
@@ -153,6 +156,10 @@ export function CampaignFormPanel({
           [channel]: {
             ...current.channels[channel],
             enabled: !current.channels[channel].enabled,
+            templateId:
+              current.channels[channel].templateId ||
+              templates.find((template) => template.channel === channel)?.id.toString() ||
+              '',
           },
         },
       }
@@ -179,6 +186,10 @@ export function CampaignFormPanel({
     return communicationProviders.filter(
       (provider) => provider.channel === channel && provider.isActive,
     )
+  }
+
+  function getChannelTemplates(channel: CampaignChannel) {
+    return templates.filter((template) => template.channel === channel)
   }
 
   return (
@@ -231,49 +242,93 @@ export function CampaignFormPanel({
 
                 if (channel === 'email') {
                   return (
-                    <label className="field" key={channel}>
-                      <span>Mode d’envoi Postmark *</span>
-                      <select
-                        onChange={(event) =>
-                          updateChannelField('email', {
-                            sendMode: event.target
-                              .value as CampaignFormValues['channels']['email']['sendMode'],
-                          })
-                        }
-                        required
-                        value={values.channels.email.sendMode}
-                      >
-                        <option value="single">
-                          Classique · /email contact par contact
-                        </option>
-                        <option value="bulk">
-                          Bulk · /email/bulk campagne groupée
-                        </option>
-                      </select>
-                    </label>
+                    <div className="campaign-channel-config-card" key={channel}>
+                      <label className="field">
+                        <span>Template Email *</span>
+                        <select
+                          onChange={(event) =>
+                            updateChannelField('email', {
+                              templateId: event.target.value,
+                            })
+                          }
+                          required
+                          value={values.channels.email.templateId}
+                        >
+                          <option value="">Sélectionner un template email</option>
+                          {getChannelTemplates('email').map((template) => (
+                            <option key={template.id} value={template.id}>
+                              {template.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="field">
+                        <span>Mode d’envoi Postmark *</span>
+                        <select
+                          onChange={(event) =>
+                            updateChannelField('email', {
+                              sendMode: event.target
+                                .value as CampaignFormValues['channels']['email']['sendMode'],
+                            })
+                          }
+                          required
+                          value={values.channels.email.sendMode}
+                        >
+                          <option value="single">
+                            Classique · /email contact par contact
+                          </option>
+                          <option value="bulk">
+                            Bulk · /email/bulk campagne groupée
+                          </option>
+                        </select>
+                      </label>
+                    </div>
                   )
                 }
 
                 return (
-                  <label className="field" key={channel}>
-                    <span>Provider {formatChannelLabel(channel)} actif *</span>
-                    <select
-                      onChange={(event) =>
-                        updateChannelField(channel, {
-                          communicationProviderId: event.target.value,
-                        })
-                      }
-                      required
-                      value={values.channels[channel].communicationProviderId}
-                    >
-                      <option value="">Sélectionner le provider actif</option>
-                      {activeProviders.map((provider) => (
-                        <option key={provider.id} value={provider.id}>
-                          {provider.name} · {provider.providerKey}
+                  <div className="campaign-channel-config-card" key={channel}>
+                    <label className="field">
+                      <span>Template {formatChannelLabel(channel)} *</span>
+                      <select
+                        onChange={(event) =>
+                          updateChannelField(channel, {
+                            templateId: event.target.value,
+                          })
+                        }
+                        required
+                        value={values.channels[channel].templateId}
+                      >
+                        <option value="">
+                          Sélectionner un template {formatChannelLabel(channel)}
                         </option>
-                      ))}
-                    </select>
-                  </label>
+                        {getChannelTemplates(channel).map((template) => (
+                          <option key={template.id} value={template.id}>
+                            {template.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Provider {formatChannelLabel(channel)} actif *</span>
+                      <select
+                        onChange={(event) =>
+                          updateChannelField(channel, {
+                            communicationProviderId: event.target.value,
+                          })
+                        }
+                        required
+                        value={values.channels[channel].communicationProviderId}
+                      >
+                        <option value="">Sélectionner le provider actif</option>
+                        {activeProviders.map((provider) => (
+                          <option key={provider.id} value={provider.id}>
+                            {provider.name} · {provider.providerKey}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
                 )
               })}
           </div>
@@ -305,29 +360,13 @@ export function CampaignFormPanel({
           </label>
 
           <label className="field">
-            <span>Objet de l’email *</span>
+            <span>Objet / libellé de campagne *</span>
             <input
               onChange={(event) => updateField('subject', event.target.value)}
               placeholder="Une offre spéciale pour {{fullName}}"
               required
               value={values.subject}
             />
-          </label>
-
-          <label className="field">
-            <span>Template email *</span>
-            <select
-              onChange={(event) => updateField('templateId', event.target.value)}
-              required
-              value={values.templateId}
-            >
-              <option value="">Sélectionner un template</option>
-              {templates.map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.name}
-                </option>
-              ))}
-            </select>
           </label>
 
           <label className="field">
@@ -369,7 +408,7 @@ export function CampaignFormPanel({
           <div className="panel-heading">
             <div>
               <p className="eyebrow">Aperçu</p>
-              <h2>{selectedTemplate?.name ?? 'Template email'}</h2>
+              <h2>{selectedTemplate?.name ?? 'Template'}</h2>
             </div>
             <Eye size={20} />
           </div>
@@ -377,20 +416,24 @@ export function CampaignFormPanel({
           {selectedTemplate && previewHtml ? (
             <>
               <div className="campaign-template-preview-meta">
-                <span>Objet</span>
+                <span>{selectedTemplate.channel === 'email' ? 'Objet' : 'Canal'}</span>
                 <strong>{values.subject || selectedTemplate.subject}</strong>
               </div>
-              <iframe
-                className="campaign-template-preview-frame"
-                sandbox=""
-                srcDoc={previewHtml}
-                title={`Aperçu du template ${selectedTemplate.name}`}
-              />
+              {selectedTemplate.channel === 'email' ? (
+                <iframe
+                  className="campaign-template-preview-frame"
+                  sandbox=""
+                  srcDoc={previewHtml}
+                  title={`Aperçu du template ${selectedTemplate.name}`}
+                />
+              ) : (
+                <pre className="campaign-message-preview">{previewHtml}</pre>
+              )}
             </>
           ) : (
             <div className="empty-state compact-empty">
               <strong>Sélectionnez un template</strong>
-              <span>L’aperçu de l’email s’affichera ici.</span>
+              <span>L’aperçu du message s’affichera ici.</span>
             </div>
           )}
         </section>
@@ -430,6 +473,7 @@ function buildChannelFormState(campaign: Campaign): CampaignFormValues['channels
           {
             channel: campaign.channel,
             communicationProviderId: campaign.communicationProviderId,
+            templateId: campaign.templateId,
             sendMode: campaign.sendMode,
           },
         ]
@@ -440,6 +484,9 @@ function buildChannelFormState(campaign: Campaign): CampaignFormValues['channels
       communicationProviderId: savedChannel.communicationProviderId
         ? String(savedChannel.communicationProviderId)
         : '',
+      templateId: savedChannel.templateId
+        ? String(savedChannel.templateId)
+        : String(campaign.templateId),
       sendMode: savedChannel.sendMode ?? 'single',
     }
   }
@@ -465,6 +512,7 @@ function buildChannelPayload(values: CampaignFormValues): CampaignChannelConfig[
         channel === 'email'
           ? null
           : Number(values.channels[channel].communicationProviderId),
+      templateId: Number(values.channels[channel].templateId),
       sendMode: values.channels[channel].sendMode,
     }))
 }
@@ -475,9 +523,26 @@ function getPrimaryChannel(channels: CampaignChannelConfig[]) {
     channels[0] ?? {
       channel: 'email' as CampaignChannel,
       communicationProviderId: null,
+      templateId: null,
       sendMode: 'single' as const,
     }
   )
+}
+
+function getPreviewTemplate(
+  values: CampaignFormValues,
+  templates: EmailTemplate[],
+) {
+  const selectedChannel =
+    campaignChannels.find(
+      (channel) =>
+        values.channels[channel].enabled &&
+        values.channels[channel].templateId.length > 0,
+    ) ?? 'email'
+  const templateId =
+    values.channels[selectedChannel]?.templateId || values.templateId
+
+  return templates.find((template) => String(template.id) === templateId) ?? null
 }
 
 function renderTemplatePreview(html: string) {

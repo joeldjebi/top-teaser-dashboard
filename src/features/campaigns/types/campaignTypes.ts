@@ -16,6 +16,7 @@ export type CampaignChannelConfig = {
   campaignId?: number
   channel: CampaignChannel
   communicationProviderId: number | null
+  templateId?: number | null
   sendMode: CampaignSendMode
   status?: CampaignStatus
   errorMessage?: string | null
@@ -66,6 +67,7 @@ export type CampaignPayload = {
 export type CampaignChannelFormState = {
   enabled: boolean
   communicationProviderId: string
+  templateId: string
   sendMode: CampaignSendMode
 }
 

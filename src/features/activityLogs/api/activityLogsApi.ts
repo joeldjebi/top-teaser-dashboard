@@ -10,3 +10,10 @@ export function fetchActivityLogs(token: string) {
     token,
   })
 }
+
+export function clearActivityLogs(token: string) {
+  return apiRequest<ApiData<{ activityLogs: number }>>('/api/activity-logs', {
+    method: 'DELETE',
+    token,
+  })
+}

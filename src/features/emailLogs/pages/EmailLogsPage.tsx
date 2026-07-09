@@ -5,17 +5,22 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  Trash2,
   UserCog,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fetchActivityLogs } from '../../activityLogs/api/activityLogsApi'
+import {
+  clearActivityLogs,
+  fetchActivityLogs,
+} from '../../activityLogs/api/activityLogsApi'
 import type { ActivityLog } from '../../activityLogs/types/activityLogTypes'
-import { fetchTechnicalLogs } from '../api/emailLogsApi'
+import { clearTechnicalLogs, fetchTechnicalLogs } from '../api/emailLogsApi'
 import type { TechnicalLog } from '../types/emailLogTypes'
 import { useAuth } from '../../auth/AuthProvider'
 import { ApiError } from '../../../lib/apiClient'
 import { Pagination } from '../../../shared/pagination/Pagination'
 import { usePagination } from '../../../shared/pagination/usePagination'
+import { useConfirmDialog } from '../../../shared/confirm/ConfirmDialogProvider'
 
 const actionLabels: Record<string, string> = {
   create: 'Création',
@@ -50,6 +55,7 @@ function getResourceLabel(resource: string) {
 
 export function EmailLogsPage() {
   const { token } = useAuth()
+  const { confirm } = useConfirmDialog()
   const [logs, setLogs] = useState<ActivityLog[]>([])
   const [technicalLogs, setTechnicalLogs] = useState<TechnicalLog[]>([])
   const [query, setQuery] = useState('')
@@ -85,6 +91,44 @@ export function EmailLogsPage() {
   useEffect(() => {
     void loadLogs()
   }, [loadLogs])
+
+  async function handleClearLogs() {
+    if (!token) return
+
+    const shouldClear = await confirm({
+      title: 'Vider les logs ?',
+      description:
+        'Toutes les activités admin et tous les logs techniques seront supprimés. Cette action est définitive.',
+      confirmLabel: 'Vider les logs',
+      variant: 'danger',
+    })
+
+    if (!shouldClear) return
+
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      const [activityResponse, technicalResponse] = await Promise.all([
+        clearActivityLogs(token),
+        clearTechnicalLogs(token),
+      ])
+      setLogs([])
+      setTechnicalLogs([])
+      setError(null)
+      console.info(
+        `[Logs] ${activityResponse.data.activityLogs} activité(s) et ${technicalResponse.data.technicalLogs} log(s) technique(s) supprimé(s).`,
+      )
+    } catch (clearError) {
+      setError(
+        clearError instanceof ApiError
+          ? clearError.message
+          : 'Impossible de vider les logs.',
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const actions = useMemo(
     () => ['all', ...Array.from(new Set(logs.map((log) => log.action)))],
@@ -155,10 +199,21 @@ export function EmailLogsPage() {
             suppressions et actions sensibles.
           </p>
         </div>
-        <button className="secondary-button" onClick={loadLogs} type="button">
-          <RefreshCw size={18} />
-          Actualiser
-        </button>
+        <div className="hero-actions">
+          <button className="secondary-button" onClick={loadLogs} type="button">
+            <RefreshCw size={18} />
+            Actualiser
+          </button>
+          <button
+            className="secondary-button danger-action"
+            disabled={logs.length === 0 && technicalLogs.length === 0}
+            onClick={handleClearLogs}
+            type="button"
+          >
+            <Trash2 size={18} />
+            Vider
+          </button>
+        </div>
       </section>
 
       <section className="insight-grid">

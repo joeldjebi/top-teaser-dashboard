@@ -196,6 +196,7 @@ export function TemplatesPage() {
   function handleUsePreset(preset: TemplatePreset) {
     setEditingTemplate(null)
     setDraftPreset({
+      channel: preset.channel,
       name: preset.name,
       subject: preset.subject,
       htmlContent: preset.htmlContent,
@@ -218,11 +219,11 @@ export function TemplatesPage() {
       <section className="page-hero compact-hero">
         <div>
           <p className="eyebrow">Templates</p>
-          <h1>Des emails légers, simples à personnaliser.</h1>
+          <h1>Des messages légers, prêts pour chaque canal.</h1>
           <p className="muted">
-            Remplissez le contenu, l’application génère un HTML propre avec
-            version texte et variables : {'{{fullName}}'}, {' {{commune}}'},
-            {' {{country}}'}, {'{{email}}'}.
+            Créez des templates Email, SMS, WhatsApp et Telegram avec les
+            variables : {'{{fullName}}'}, {' {{commune}}'}, {' {{country}}'},
+            {'{{email}}'}, {' {{mobileNumber}}'}.
           </p>
         </div>
         <div className="hero-actions">
@@ -261,7 +262,7 @@ export function TemplatesPage() {
         <div className="insight-card">
           <FileText size={20} />
           <span>Variables</span>
-          <strong>6</strong>
+          <strong>8</strong>
         </div>
       </section>
 
@@ -302,10 +303,14 @@ export function TemplatesPage() {
                 <p className="eyebrow">Aperçu</p>
                 <h2>{preview.subject}</h2>
               </div>
-              <div
-                className="email-preview"
-                dangerouslySetInnerHTML={{ __html: preview.html }}
-              />
+              {preview.html.trim().startsWith('<') ? (
+                <div
+                  className="email-preview"
+                  dangerouslySetInnerHTML={{ __html: preview.html }}
+                />
+              ) : (
+                <pre className="message-preview">{preview.text ?? preview.html}</pre>
+              )}
               {preview.text ? <pre>{preview.text}</pre> : null}
             </section>
           ) : null}

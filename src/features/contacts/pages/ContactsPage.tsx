@@ -4,6 +4,7 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  Trash2,
   UserPlus,
   Users,
   X,
@@ -17,6 +18,7 @@ import { useAuth } from '../../auth/AuthProvider'
 import { fetchCountries } from '../../locations/api/locationsApi'
 import type { Country } from '../../locations/types/locationTypes'
 import {
+  clearContacts,
   createContact,
   deleteContact,
   fetchContacts,
@@ -200,6 +202,39 @@ export function ContactsPage() {
     }
   }
 
+  async function handleClearContacts() {
+    if (!token) return
+
+    const shouldClear = await confirm({
+      title: 'Vider tous les contacts ?',
+      description:
+        'Tous les contacts, affectations aux listes, rapports d’import et destinataires préparés seront supprimés. Cette action est définitive.',
+      confirmLabel: 'Vider les contacts',
+      variant: 'danger',
+    })
+
+    if (!shouldClear) return
+
+    setError(null)
+    setImportMessage(null)
+
+    try {
+      const { data } = await clearContacts(token)
+      setContacts([])
+      setEditingContact(null)
+      setImportReport(null)
+      setImportMessage(
+        `${data.contacts} contact(s), ${data.imports} import(s) et ${data.recipients} destinataire(s) préparé(s) supprimé(s).`,
+      )
+    } catch (clearError) {
+      setError(
+        clearError instanceof ApiError
+          ? clearError.message
+          : 'Impossible de vider les contacts.',
+      )
+    }
+  }
+
   async function handleImport(file: File | null) {
     if (!token || !file) {
       return
@@ -302,6 +337,15 @@ export function ContactsPage() {
           <button className="secondary-button" onClick={loadContacts} type="button">
             <RefreshCw size={18} />
             Actualiser
+          </button>
+          <button
+            className="secondary-button danger-action"
+            disabled={contacts.length === 0}
+            onClick={handleClearContacts}
+            type="button"
+          >
+            <Trash2 size={18} />
+            Vider
           </button>
         </div>
       </section>

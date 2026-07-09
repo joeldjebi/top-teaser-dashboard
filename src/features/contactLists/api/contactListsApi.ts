@@ -54,6 +54,16 @@ export function deleteContactList(token: string, contactListId: number) {
   })
 }
 
+export function clearContactLists(token: string) {
+  return apiRequest<ApiData<{ campaigns: number; contactLists: number }>>(
+    '/api/contact-lists',
+    {
+      method: 'DELETE',
+      token,
+    },
+  )
+}
+
 export function addContactToList(
   token: string,
   contactListId: number,

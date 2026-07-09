@@ -10,6 +10,7 @@ export type TemplatePreset = TemplateFormValues & {
 function preset(input: {
   id: string
   category: string
+  channel?: TemplateFormValues['channel']
   name: string
   subject: string
   title: string
@@ -29,6 +30,7 @@ function preset(input: {
   return {
     id: input.id,
     category: input.category,
+    channel: input.channel ?? 'email',
     name: input.name,
     subject: input.subject,
     description: input.description,
@@ -84,4 +86,40 @@ export const templatePresets: TemplatePreset[] = [
     ctaLabel: 'Reprendre',
     ctaUrl: 'https://example.com',
   }),
+  {
+    id: 'sms-rappel-court',
+    category: 'SMS',
+    channel: 'sms',
+    name: 'SMS rappel court',
+    subject: 'Rappel SMS',
+    description: 'Un SMS court avec personnalisation du contact.',
+    htmlContent:
+      'Bonjour {{fullName}}, rappel : votre information Top Teaser est disponible à {{commune}}. Répondez STOP pour ne plus recevoir nos messages.',
+    textContent:
+      'Bonjour {{fullName}}, rappel : votre information Top Teaser est disponible à {{commune}}. Répondez STOP pour ne plus recevoir nos messages.',
+  },
+  {
+    id: 'whatsapp-offre-directe',
+    category: 'WhatsApp',
+    channel: 'whatsapp',
+    name: 'WhatsApp offre directe',
+    subject: 'Offre WhatsApp',
+    description: 'Un message WhatsApp naturel, personnalisé et léger.',
+    htmlContent:
+      'Bonjour {{fullName}},\n\nNous avons une offre disponible pour vous à {{commune}}.\n\nDites-nous si vous souhaitez recevoir les détails.',
+    textContent:
+      'Bonjour {{fullName}},\n\nNous avons une offre disponible pour vous à {{commune}}.\n\nDites-nous si vous souhaitez recevoir les détails.',
+  },
+  {
+    id: 'telegram-info-rapide',
+    category: 'Telegram',
+    channel: 'telegram',
+    name: 'Telegram info rapide',
+    subject: 'Information Telegram',
+    description: 'Un message Telegram clair, court et réutilisable.',
+    htmlContent:
+      'Bonjour {{fullName}}, une nouvelle information Top Teaser est disponible pour {{commune}}, {{country}}.',
+    textContent:
+      'Bonjour {{fullName}}, une nouvelle information Top Teaser est disponible pour {{commune}}, {{country}}.',
+  },
 ]

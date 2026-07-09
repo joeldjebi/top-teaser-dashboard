@@ -46,6 +46,13 @@ export function deleteCampaign(token: string, campaignId: number) {
   })
 }
 
+export function clearCampaigns(token: string) {
+  return apiRequest<ApiData<{ campaigns: number }>>('/api/campaigns', {
+    method: 'DELETE',
+    token,
+  })
+}
+
 export function prepareCampaign(token: string, campaignId: number) {
   return apiRequest<
     ApiData<{ campaign: Campaign; preparedRecipients: number; stats: CampaignStats }>

@@ -42,6 +42,15 @@ export function deleteContact(token: string, contactId: number) {
   })
 }
 
+export function clearContacts(token: string) {
+  return apiRequest<
+    ApiData<{ contacts: number; imports: number; recipients: number }>
+  >('/api/contacts', {
+    method: 'DELETE',
+    token,
+  })
+}
+
 export function importContactsFile(token: string, file: File) {
   const formData = new FormData()
   formData.append('file', file)
