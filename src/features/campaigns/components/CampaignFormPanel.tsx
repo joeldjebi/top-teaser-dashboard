@@ -282,9 +282,9 @@ export function CampaignFormPanel({
             (channel) => channel !== 'email' && values.channels[channel].enabled,
           ) ? (
             <div className="form-alert neutral-alert">
-              Les canaux SMS, WhatsApp et Telegram sont enregistrés avec leurs
-              providers. Leur moteur d’envoi réel sera branché dans l’étape
-              multicanal.
+              Les canaux SMS, WhatsApp et Telegram utilisent leurs providers
+              actifs. WhatsApp supporte Wassenger avec limitation de débit et
+              personnalisation par contact.
             </div>
           ) : null}
 

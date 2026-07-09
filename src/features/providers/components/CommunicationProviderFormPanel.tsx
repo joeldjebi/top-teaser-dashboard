@@ -35,9 +35,10 @@ function getDefaultVariables(
       { key: 'sender', label: 'Expéditeur', required: false, secret: false, value: '' },
     ],
     whatsapp: [
-      { key: 'api_url', label: 'URL API', required: true, secret: false, value: '' },
-      { key: 'bearer_token', label: 'Token Bearer', required: true, secret: true, value: '' },
-      { key: 'payload_json', label: 'Payload JSON personnalisé', required: false, secret: false, value: '' },
+      { key: 'base_url', label: 'URL API', required: true, secret: false, value: 'https://api.wassenger.com/v1' },
+      { key: 'api_token', label: 'Token API Wassenger', required: true, secret: true, value: '' },
+      { key: 'device_id', label: 'Device ID WhatsApp', required: true, secret: true, value: '' },
+      { key: 'media_file_id', label: 'Fichier média Wassenger', required: false, secret: false, value: '' },
     ],
     telegram: [
       { key: 'bot_token', label: 'Token du bot', required: true, secret: true, value: '' },
@@ -62,7 +63,7 @@ function getChannelLabel(channel: Exclude<CommunicationChannel, 'email'>) {
 function getProviderPlaceholder(channel: Exclude<CommunicationChannel, 'email'>) {
   const placeholders: Record<Exclude<CommunicationChannel, 'email'>, string> = {
     sms: 'Twilio SMS',
-    whatsapp: 'Meta WhatsApp',
+    whatsapp: 'Wassenger WhatsApp',
     telegram: 'Telegram Bot',
   }
 
@@ -72,7 +73,7 @@ function getProviderPlaceholder(channel: Exclude<CommunicationChannel, 'email'>)
 function getProviderKeyPlaceholder(channel: Exclude<CommunicationChannel, 'email'>) {
   const placeholders: Record<Exclude<CommunicationChannel, 'email'>, string> = {
     sms: 'twilio',
-    whatsapp: 'meta-whatsapp',
+    whatsapp: 'wassenger',
     telegram: 'telegram-bot',
   }
 
@@ -92,10 +93,10 @@ export function CommunicationProviderFormPanel({
     isActive: false,
     variables: getDefaultVariables(channel),
     limits: {
-      batchSize: 100,
-      maxPerDay: 10000,
-      maxPerHour: 1000,
-      maxPerMinute: 60,
+      batchSize: channel === 'whatsapp' ? 2000 : 100,
+      maxPerDay: channel === 'whatsapp' ? 20000 : 10000,
+      maxPerHour: channel === 'whatsapp' ? 6000 : 1000,
+      maxPerMinute: channel === 'whatsapp' ? 100 : 60,
     },
   })
 
@@ -105,6 +106,12 @@ export function CommunicationProviderFormPanel({
         ...current,
         channel,
         variables: getDefaultVariables(channel),
+        limits: {
+          batchSize: channel === 'whatsapp' ? 2000 : 100,
+          maxPerDay: channel === 'whatsapp' ? 20000 : 10000,
+          maxPerHour: channel === 'whatsapp' ? 6000 : 1000,
+          maxPerMinute: channel === 'whatsapp' ? 100 : 60,
+        },
       }))
       return
     }
