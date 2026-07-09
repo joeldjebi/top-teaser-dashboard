@@ -52,6 +52,18 @@ export function createAdminUser(token: string, payload: AdminAccountPayload) {
   })
 }
 
+export function updateAdminUser(
+  token: string,
+  adminId: number,
+  payload: Partial<AdminAccountPayload>,
+) {
+  return apiRequest<ApiData<AdminAccount>>(`/api/admin-users/${adminId}`, {
+    method: 'PATCH',
+    token,
+    body: JSON.stringify(payload),
+  })
+}
+
 export function deleteAdminUser(token: string, adminId: number) {
   return apiRequest<null>(`/api/admin-users/${adminId}`, {
     method: 'DELETE',

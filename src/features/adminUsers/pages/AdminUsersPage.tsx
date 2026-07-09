@@ -1,4 +1,4 @@
-import { Plus, ShieldCheck, Trash2, UserPlus } from 'lucide-react'
+import { Edit3, Plus, Power, PowerOff, ShieldCheck, Trash2, UserPlus, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ApiError } from '../../../lib/apiClient'
 import { useConfirmDialog } from '../../../shared/confirm/ConfirmDialogProvider'
@@ -10,6 +10,7 @@ import {
   deleteAdminUser,
   fetchAdminRoles,
   fetchAdminUsers,
+  updateAdminUser,
 } from '../api/adminUsersApi'
 import type { AdminAccount, AdminRole } from '../types/adminUserTypes'
 
@@ -49,7 +50,9 @@ export function AdminUsersPage() {
     name: '',
     email: '',
     roleId: '',
+    isActive: true,
   })
+  const [editingAdmin, setEditingAdmin] = useState<AdminAccount | null>(null)
   const [createdInvitation, setCreatedInvitation] = useState<{
     email: string
     sent: boolean
@@ -60,7 +63,10 @@ export function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
-  const canManage = Boolean(user?.permissions.admins.create)
+  const currentAdmin = admins.find((admin) => admin.id === user?.id)
+  const canCreate = Boolean(user?.permissions.admins.create)
+  const canManageRoles = Boolean(user?.permissions.admins.create)
+  const canManageAdmins = Boolean(currentAdmin?.isProtected)
 
   const load = useCallback(async () => {
     if (!token) return
@@ -146,7 +152,7 @@ export function AdminUsersPage() {
         sent: created.invitationEmailSent,
         url: created.invitationUrl,
       })
-      setAdminForm({ name: '', email: '', roleId: '' })
+      setAdminForm({ name: '', email: '', roleId: '', isActive: true })
       setSuccess(created.message)
       await load()
     } catch (adminError) {
@@ -157,6 +163,78 @@ export function AdminUsersPage() {
       )
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function handleSaveAdmin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (editingAdmin) {
+      await handleUpdateAdmin(event)
+      return
+    }
+
+    await handleCreateAdmin(event)
+  }
+
+  async function handleUpdateAdmin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!token || !editingAdmin) return
+
+    setIsSaving(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      await updateAdminUser(token, editingAdmin.id, {
+        name: adminForm.name,
+        email: adminForm.email,
+        roleId: Number(adminForm.roleId),
+        isActive: adminForm.isActive,
+      })
+      setEditingAdmin(null)
+      setAdminForm({ name: '', email: '', roleId: '', isActive: true })
+      setSuccess('Admin mis à jour.')
+      await load()
+    } catch (adminError) {
+      setError(
+        adminError instanceof ApiError
+          ? adminError.message
+          : 'Impossible de modifier cet admin.',
+      )
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleToggleAdminStatus(admin: AdminAccount) {
+    if (!token) return
+
+    const nextIsActive = !admin.isActive
+    const shouldToggle = await confirm({
+      title: nextIsActive ? 'Activer cet admin ?' : 'Désactiver cet admin ?',
+      description: nextIsActive
+        ? `Le compte « ${admin.name} » pourra à nouveau se connecter.`
+        : `Le compte « ${admin.name} » ne pourra plus se connecter.`,
+      confirmLabel: nextIsActive ? 'Activer' : 'Désactiver',
+      variant: nextIsActive ? 'success' : 'warning',
+    })
+
+    if (!shouldToggle) return
+
+    setError(null)
+    setSuccess(null)
+
+    try {
+      await updateAdminUser(token, admin.id, { isActive: nextIsActive })
+      setSuccess(nextIsActive ? 'Admin activé.' : 'Admin désactivé.')
+      await load()
+    } catch (toggleError) {
+      setError(
+        toggleError instanceof ApiError
+          ? toggleError.message
+          : 'Impossible de modifier le statut de cet admin.',
+      )
     }
   }
 
@@ -171,6 +249,23 @@ export function AdminUsersPage() {
     if (!shouldDelete) return
     await deleteAdminUser(token, admin.id)
     await load()
+  }
+
+  function handleEditAdmin(admin: AdminAccount) {
+    setEditingAdmin(admin)
+    setAdminForm({
+      name: admin.name,
+      email: admin.email,
+      roleId: admin.roleId ? String(admin.roleId) : '',
+      isActive: admin.isActive,
+    })
+    setError(null)
+    setSuccess(null)
+  }
+
+  function cancelEditAdmin() {
+    setEditingAdmin(null)
+    setAdminForm({ name: '', email: '', roleId: '', isActive: true })
   }
 
   function togglePermission(
@@ -243,7 +338,7 @@ export function AdminUsersPage() {
           <label className="field">
             <span>Nom du rôle</span>
             <input
-              disabled={!canManage}
+              disabled={!canManageRoles}
               onChange={(event) => setRoleName(event.target.value)}
               required
               value={roleName}
@@ -252,7 +347,7 @@ export function AdminUsersPage() {
           <label className="field">
             <span>Description</span>
             <input
-              disabled={!canManage}
+              disabled={!canManageRoles}
               onChange={(event) => setRoleDescription(event.target.value)}
               value={roleDescription}
             />
@@ -270,7 +365,7 @@ export function AdminUsersPage() {
                 {actions.map((action) => (
                   <input
                     checked={permissions[resource.key][action]}
-                    disabled={!canManage}
+                    disabled={!canManageRoles}
                     key={action}
                     onChange={() => togglePermission(resource.key, action)}
                     type="checkbox"
@@ -279,20 +374,28 @@ export function AdminUsersPage() {
               </div>
             ))}
           </div>
-          <button className="primary-button" disabled={!canManage || isSaving}>
+          <button className="primary-button" disabled={!canManageRoles || isSaving}>
             Créer le rôle
           </button>
         </form>
 
-        <form className="admin-panel stack-form" onSubmit={handleCreateAdmin}>
+        <form className="admin-panel stack-form" onSubmit={handleSaveAdmin}>
           <div>
             <p className="eyebrow">Admins</p>
-            <h2>Créer un admin</h2>
+            <h2>{editingAdmin ? 'Modifier un admin' : 'Créer un admin'}</h2>
           </div>
+          {editingAdmin ? (
+            <div className="form-alert neutral-alert admin-edit-banner">
+              <span>Modification de {editingAdmin.email}</span>
+              <button className="icon-button soft" onClick={cancelEditAdmin} type="button">
+                <X size={17} />
+              </button>
+            </div>
+          ) : null}
           <label className="field">
             <span>Nom</span>
             <input
-              disabled={!canManage}
+              disabled={editingAdmin ? !canManageAdmins : !canCreate}
               onChange={(event) =>
                 setAdminForm((current) => ({ ...current, name: event.target.value }))
               }
@@ -303,7 +406,7 @@ export function AdminUsersPage() {
           <label className="field">
             <span>Email</span>
             <input
-              disabled={!canManage}
+              disabled={editingAdmin ? !canManageAdmins : !canCreate}
               onChange={(event) =>
                 setAdminForm((current) => ({ ...current, email: event.target.value }))
               }
@@ -315,7 +418,7 @@ export function AdminUsersPage() {
           <label className="field">
             <span>Rôle</span>
             <select
-              disabled={!canManage}
+              disabled={editingAdmin ? !canManageAdmins : !canCreate}
               onChange={(event) =>
                 setAdminForm((current) => ({
                   ...current,
@@ -333,8 +436,27 @@ export function AdminUsersPage() {
               ))}
             </select>
           </label>
-          <button className="primary-button" disabled={!canManage || isSaving}>
-            Créer l’admin
+          {editingAdmin ? (
+            <label className="toggle-field provider-active-toggle">
+              <span>Compte actif</span>
+              <input
+                checked={adminForm.isActive}
+                disabled={!canManageAdmins || editingAdmin.id === user?.id}
+                onChange={(event) =>
+                  setAdminForm((current) => ({
+                    ...current,
+                    isActive: event.target.checked,
+                  }))
+                }
+                type="checkbox"
+              />
+            </label>
+          ) : null}
+          <button
+            className="primary-button"
+            disabled={(editingAdmin ? !canManageAdmins : !canCreate) || isSaving}
+          >
+            {editingAdmin ? 'Mettre à jour l’admin' : 'Créer l’admin'}
           </button>
         </form>
       </section>
@@ -357,9 +479,32 @@ export function AdminUsersPage() {
                 <span className="provider-status-badge provider-status-ready">
                   {admin.roleName}
                 </span>
+                <span
+                  className={`provider-status-badge ${
+                    admin.isActive ? 'provider-status-active' : 'provider-status-missing'
+                  }`}
+                >
+                  {admin.isActive ? 'Actif' : 'Inactif'}
+                </span>
+                <button
+                  className="icon-button soft"
+                  disabled={!canManageAdmins || admin.isProtected}
+                  onClick={() => handleEditAdmin(admin)}
+                  type="button"
+                >
+                  <Edit3 size={17} />
+                </button>
+                <button
+                  className="icon-button soft"
+                  disabled={!canManageAdmins || admin.isProtected || admin.id === user?.id}
+                  onClick={() => handleToggleAdminStatus(admin)}
+                  type="button"
+                >
+                  {admin.isActive ? <PowerOff size={17} /> : <Power size={17} />}
+                </button>
                 <button
                   className="icon-button danger"
-                  disabled={!user?.permissions.admins.delete || admin.id === user.id}
+                  disabled={!canManageAdmins || admin.isProtected || admin.id === user?.id}
                   onClick={() => handleDeleteAdmin(admin)}
                   type="button"
                 >

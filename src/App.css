@@ -1027,12 +1027,19 @@
 
 .admin-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto auto;
   gap: 12px;
   align-items: center;
   border: 1px solid #edf2f5;
   border-radius: 8px;
   padding: 12px;
+}
+
+.admin-edit-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .admin-row strong,
@@ -1047,6 +1054,12 @@
 .admin-row span {
   color: var(--muted);
   font-size: 13px;
+}
+
+@media (max-width: 780px) {
+  .admin-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .country-list,

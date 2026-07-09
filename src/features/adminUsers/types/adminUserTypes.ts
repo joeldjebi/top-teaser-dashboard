@@ -16,6 +16,8 @@ export type AdminAccount = {
   role: 'admin' | 'super_admin'
   roleId: number | null
   roleName: string
+  isActive: boolean
+  isProtected: boolean
   permissions: PermissionMatrix | null
   createdAt: string
   updatedAt: string
@@ -31,6 +33,7 @@ export type AdminAccountPayload = {
   name: string
   email: string
   roleId: number
+  isActive?: boolean
 }
 
 export type AdminAccountCreatedResponse = {
