@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  Globe2,
   MapPinned,
   KanbanSquare,
   Send,
@@ -22,6 +23,7 @@ import { ContactListsPage } from '../features/contactLists/pages/ContactListsPag
 import { ContactsPage } from '../features/contacts/pages/ContactsPage'
 import { EmailLogsPage } from '../features/emailLogs/pages/EmailLogsPage'
 import { LocationsPage } from '../features/locations/pages/LocationsPage'
+import { LandingAdminPage } from '../features/landingAdmin/pages/LandingAdminPage'
 import { OverviewPage } from '../features/overview/pages/OverviewPage'
 import { ProvidersPage } from '../features/providers/pages/ProvidersPage'
 import { TemplatesPage } from '../features/templates/pages/TemplatesPage'
@@ -37,6 +39,7 @@ const navItems = [
   { id: 'pipeline', label: 'Pipeline campagnes', icon: KanbanSquare },
   { id: 'logs', label: 'Logs', icon: BarChart3 },
   { id: 'providers', label: 'Providers', icon: Mail },
+  { id: 'landing', label: 'Landing page', icon: Globe2 },
   { id: 'admins', label: 'Admins & rôles', icon: ShieldCheck },
   { id: 'account', label: 'Mon compte', icon: UserCog },
 ] as const
@@ -101,6 +104,7 @@ export function AdminShell() {
         {activeView === 'pipeline' ? <CampaignPipelinePage /> : null}
         {activeView === 'logs' ? <EmailLogsPage /> : null}
         {activeView === 'providers' ? <ProvidersPage /> : null}
+        {activeView === 'landing' ? <LandingAdminPage /> : null}
         {activeView === 'admins' ? <AdminUsersPage /> : null}
         {activeView === 'account' ? <AccountPage /> : null}
       </section>

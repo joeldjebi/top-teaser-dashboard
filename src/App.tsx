@@ -1,6 +1,7 @@
 import { AuthProvider, useAuth } from './features/auth/AuthProvider'
 import { AcceptInvitePage } from './features/auth/pages/AcceptInvitePage'
 import { LoginPage } from './features/auth/pages/LoginPage'
+import { LandingPage } from './features/landing/pages/LandingPage'
 import { AdminShell } from './layouts/AdminShell'
 import { AuthLayout } from './layouts/AuthLayout'
 import { BrandLogo } from './shared/brand/BrandLogo'
@@ -10,6 +11,11 @@ import './App.css'
 function AppContent() {
   const { isAuthenticated, isBootstrapping } = useAuth()
   const isAcceptInvitePage = window.location.pathname === '/accept-invite'
+  const isAdminPage = window.location.pathname.startsWith('/admin')
+
+  if (!isAdminPage && !isAcceptInvitePage) {
+    return <LandingPage />
+  }
 
   if (isBootstrapping) {
     return (

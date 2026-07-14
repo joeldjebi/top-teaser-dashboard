@@ -22,6 +22,7 @@ const resources: Array<{ key: PermissionResource; label: string }> = [
   { key: 'campaigns', label: 'Campagnes' },
   { key: 'logs', label: 'Logs' },
   { key: 'providers', label: 'Providers' },
+  { key: 'landing', label: 'Landing page' },
   { key: 'admins', label: 'Admins' },
 ]
 

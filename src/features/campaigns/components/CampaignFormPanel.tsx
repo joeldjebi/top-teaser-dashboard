@@ -156,6 +156,9 @@ export function CampaignFormPanel({
           [channel]: {
             ...current.channels[channel],
             enabled: !current.channels[channel].enabled,
+            communicationProviderId:
+              current.channels[channel].communicationProviderId ||
+              getDefaultProviderId(channel, communicationProviders),
             templateId:
               current.channels[channel].templateId ||
               templates.find((template) => template.channel === channel)?.id.toString() ||
@@ -288,6 +291,10 @@ export function CampaignFormPanel({
 
                 return (
                   <div className="campaign-channel-config-card" key={channel}>
+                    <div className="channel-config-heading">
+                      <strong>{formatChannelLabel(channel)}</strong>
+                      <span>{getProviderHint(channel, activeProviders)}</span>
+                    </div>
                     <label className="field">
                       <span>Template {formatChannelLabel(channel)} *</span>
                       <select
@@ -332,6 +339,17 @@ export function CampaignFormPanel({
                 )
               })}
           </div>
+
+          {values.channels.whatsapp.enabled ? (
+            <div className="form-alert neutral-alert">
+              Pour Wassenger, sélectionnez le template WhatsApp
+              top_teaser_campagne et le provider actif configuré avec
+              device_id, waba_template_name=top_teaser_campagne,
+              waba_template_language=fr et waba_template_button_variables=1=offerUrl.
+              Dans Wassenger, le premier bouton est en position 0 ; ici `1`
+              désigne la variable Meta {'{{1}}'} du bouton.
+            </div>
+          ) : null}
 
           {campaignChannels.some(
             (channel) => channel !== 'email' && values.channels[channel].enabled,
@@ -547,6 +565,7 @@ function getPreviewTemplate(
 
 function renderTemplatePreview(html: string) {
   const variables: Record<string, string> = {
+    buttonUrl: 'https://top-teaser.com/offre',
     commune: 'Cocody',
     country: 'Côte d’Ivoire',
     email: 'awa.kone@example.com',
@@ -554,7 +573,13 @@ function renderTemplatePreview(html: string) {
     fullName: 'Awa Koné',
     lastName: 'Koné',
     mobileNumber: '+225 07 00 00 00 00',
+    nomPrenoms: 'Awa Koné',
+    numeroMobile: '+225 07 00 00 00 00',
+    offerUrl: 'https://top-teaser.com/offre',
+    pays: 'Côte d’Ivoire',
+    telephone: '+225 07 00 00 00 00',
     unsubscribeUrl: 'https://top-teaser.com/unsubscribe/demo-token',
+    url: 'https://top-teaser.com/offre',
   }
 
   return Object.entries(variables).reduce(
@@ -562,4 +587,37 @@ function renderTemplatePreview(html: string) {
       content.replace(new RegExp(`{{\\s*${key}\\s*}}`, 'g'), value),
     html,
   )
+}
+
+function getDefaultProviderId(
+  channel: CampaignChannel,
+  communicationProviders: CommunicationProvider[],
+) {
+  if (channel === 'email') return ''
+
+  return (
+    communicationProviders
+      .find((provider) => provider.channel === channel && provider.isActive)
+      ?.id.toString() ?? ''
+  )
+}
+
+function getProviderHint(
+  channel: CampaignChannel,
+  activeProviders: CommunicationProvider[],
+) {
+  const activeProvider = activeProviders[0]
+
+  if (!activeProvider) {
+    return `Aucun provider ${formatChannelLabel(channel)} actif`
+  }
+
+  if (
+    channel === 'whatsapp' &&
+    activeProvider.providerKey.trim().toLowerCase() === 'wassenger'
+  ) {
+    return 'Wassenger · Template Meta/WABA'
+  }
+
+  return `${activeProvider.name} · ${activeProvider.providerKey}`
 }

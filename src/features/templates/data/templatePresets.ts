@@ -102,13 +102,13 @@ export const templatePresets: TemplatePreset[] = [
     id: 'whatsapp-offre-directe',
     category: 'WhatsApp',
     channel: 'whatsapp',
-    name: 'WhatsApp offre directe',
-    subject: 'Offre WhatsApp',
-    description: 'Un message WhatsApp naturel, personnalisé et léger.',
+    name: 'top_teaser_campagne',
+    subject: 'top_teaser_campagne',
+    description: 'Modèle WhatsApp Meta approuvé avec bouton URL dynamique.',
     htmlContent:
-      'Bonjour {{fullName}},\n\nNous avons une offre disponible pour vous à {{commune}}.\n\nDites-nous si vous souhaitez recevoir les détails.',
+      'Offre promotionnel\n\nLe lancement est enfin arrivé !\nNe manquez pas cette opportunité de découvrir notre nouveau produit.\nCliquez sur le bouton ci-dessous pour accéder directement à notre offre.\n\nBouton : Profiter\nURL dynamique : {{offerUrl}}',
     textContent:
-      'Bonjour {{fullName}},\n\nNous avons une offre disponible pour vous à {{commune}}.\n\nDites-nous si vous souhaitez recevoir les détails.',
+      'Offre promotionnel\n\nLe lancement est enfin arrivé !\nNe manquez pas cette opportunité de découvrir notre nouveau produit.\nCliquez sur le bouton ci-dessous pour accéder directement à notre offre.\n\nBouton : Profiter\nURL dynamique : {{offerUrl}}',
   },
   {
     id: 'telegram-info-rapide',

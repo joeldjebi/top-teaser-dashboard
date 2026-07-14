@@ -36,11 +36,13 @@ function getDefaultVariables(
     ],
     whatsapp: [
       { key: 'base_url', label: 'URL API', required: true, secret: false, value: 'https://api.wassenger.com/v1' },
-      { key: 'api_token', label: 'Token API Wassenger', required: true, secret: true, value: '' },
+      { key: 'api_token', label: 'Token API Wassenger', required: false, secret: true, value: '' },
       { key: 'device_id', label: 'Device ID Wassenger', required: true, secret: false, value: '' },
-      { key: 'waba_template_name', label: 'Template WABA approuvé', required: false, secret: false, value: '' },
+      { key: 'default_country_code', label: 'Indicatif par défaut', required: false, secret: false, value: '225' },
+      { key: 'waba_template_name', label: 'Template WABA approuvé', required: false, secret: false, value: 'top_teaser_campagne' },
       { key: 'waba_template_language', label: 'Langue du template', required: false, secret: false, value: 'fr' },
-      { key: 'waba_template_body_variables', label: 'Variables du template', required: false, secret: false, value: 'fullName,commune,country' },
+      { key: 'waba_template_body_variables', label: 'Variables du corps', required: false, secret: false, value: '' },
+      { key: 'waba_template_button_variables', label: 'Variables des boutons', required: false, secret: false, value: '1=offerUrl' },
       { key: 'media_file_id', label: 'Fichier média Wassenger', required: false, secret: false, value: '' },
     ],
     telegram: [
@@ -81,6 +83,39 @@ function getProviderKeyPlaceholder(channel: Exclude<CommunicationChannel, 'email
   }
 
   return placeholders[channel]
+}
+
+function normalizeProviderVariables(
+  provider: CommunicationProvider,
+  channel: Exclude<CommunicationChannel, 'email'>,
+) {
+  const defaults = getDefaultVariables(channel)
+  const providerVariablesByKey = new Map(
+    provider.variables.map((variable) => [variable.key, variable]),
+  )
+
+  const normalized = defaults.map((defaultItem) => {
+    const existing = providerVariablesByKey.get(defaultItem.key)
+    const existingValue = existing?.value?.trim()
+    const shouldResetLegacyBodyVariables =
+      defaultItem.key === 'waba_template_body_variables' &&
+      existingValue?.replace(/\s+/g, '').toLowerCase() ===
+        'fullname,commune,country'
+
+    return {
+      ...defaultItem,
+      value: shouldResetLegacyBodyVariables
+        ? defaultItem.value
+        : existing?.value ?? defaultItem.value,
+    }
+  })
+
+  const knownDefaultKeys = new Set(defaults.map((variable) => variable.key))
+  const customVariables = provider.variables.filter(
+    (variable) => !knownDefaultKeys.has(variable.key),
+  )
+
+  return [...normalized, ...customVariables]
 }
 
 function isValidProviderConfig(values: CommunicationProviderPayload) {
@@ -149,7 +184,7 @@ export function CommunicationProviderFormPanel({
       isActive: provider.isActive,
       variables:
         provider.variables.length > 0
-          ? provider.variables
+          ? normalizeProviderVariables(provider, provider.channel)
           : getDefaultVariables(channel),
       limits: provider.limits,
     })
@@ -257,7 +292,8 @@ export function CommunicationProviderFormPanel({
               64f1a2b3c4d5e6f7890abc12. Il se copie depuis Wassenger, section
               Devices. Pour écrire à un contact hors fenêtre 24h, renseignez un
               template WABA approuvé et ses variables, exemple :
-              fullName,commune,country ou 0=fullName,1=commune.
+              1=offerUrl pour la variable Meta {'{{1}}'} du premier bouton URL
+              du modèle top_teaser_campagne.
             </div>
           ) : null}
 

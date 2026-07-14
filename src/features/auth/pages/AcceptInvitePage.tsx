@@ -39,7 +39,7 @@ export function AcceptInvitePage() {
       setPassword('')
       setConfirmation('')
       window.setTimeout(() => {
-        window.location.assign('/')
+        window.location.assign('/admin')
       }, 1200)
     } catch (inviteError) {
       setError(
