@@ -49,10 +49,12 @@ type NavItemId = (typeof navItems)[number]['id']
 export function AdminShell() {
   const { logoutAdmin, user } = useAuth()
   const [activeView, setActiveView] = useState<NavItemId>('overview')
+  const isSuperAdmin = user?.role === 'super_admin'
   const visibleNavItems = navItems.filter((item) => {
     if (item.id === 'account') return true
-    if (item.id === 'locations') return user?.permissions.contacts.read
-    if (item.id === 'pipeline') return user?.permissions.campaigns.read
+    if (isSuperAdmin) return true
+    if (item.id === 'locations') return user?.permissions.contacts?.read
+    if (item.id === 'pipeline') return user?.permissions.campaigns?.read
     return user?.permissions[item.id]?.read
   })
 
