@@ -153,16 +153,7 @@ export function CampaignsPage() {
     void loadCampaigns()
   }, [loadCampaigns])
 
-  // Polling: refresh campaigns every 10 seconds
-  useEffect(() => {
-    const pollInterval = setInterval(() => {
-      void loadCampaigns()
-    }, 10000)
-
-    return () => clearInterval(pollInterval)
-  }, [loadCampaigns])
-
-  // Sync selected campaign with updated campaigns from polling
+  // Sync selected campaign after manual refreshes or campaign actions.
   useEffect(() => {
     if (selectedCampaign) {
       const updatedCampaign = campaigns.find(
