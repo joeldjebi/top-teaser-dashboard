@@ -202,6 +202,60 @@ export function CampaignsPage() {
   }, [campaigns, query, statusFilter])
 
   const campaignsPagination = usePagination(visibleCampaigns)
+  const hasLiveCampaigns = useMemo(
+    () =>
+      campaigns.some((campaign) =>
+        ['ready', 'sending'].includes(campaign.status),
+      ),
+    [campaigns],
+  )
+
+  const refreshCampaignsSilently = useCallback(async () => {
+    if (!token || document.visibilityState === 'hidden') {
+      return
+    }
+
+    try {
+      const campaignsResponse = await fetchCampaigns(token)
+      setCampaigns(campaignsResponse.data)
+
+      const selected = selectedCampaign
+        ? campaignsResponse.data.find((campaign) => campaign.id === selectedCampaign.id)
+        : null
+
+      if (selected) {
+        setSelectedCampaign(selected)
+
+        if (['ready', 'sending'].includes(selected.status)) {
+          const [statsResponse, recipientsResponse, channelStatusesResponse] =
+            await Promise.all([
+              fetchCampaignStats(token, selected.id),
+              fetchCampaignRecipients(token, selected.id),
+              fetchCampaignChannelStatuses(token, selected.id),
+            ])
+
+          setSelectedStats(statsResponse.data)
+          setSelectedRecipients(recipientsResponse.data)
+          setSelectedChannelStatuses(channelStatusesResponse.data)
+        }
+      }
+    } catch {
+      // Silent refresh must not interrupt the admin while the cron works.
+    }
+  }, [selectedCampaign, token])
+
+  useEffect(() => {
+    if (!token || pageMode !== 'list') {
+      return undefined
+    }
+
+    const intervalMs = hasLiveCampaigns ? 15000 : 60000
+    const interval = window.setInterval(() => {
+      void refreshCampaignsSilently()
+    }, intervalMs)
+
+    return () => window.clearInterval(interval)
+  }, [hasLiveCampaigns, pageMode, refreshCampaignsSilently, token])
 
   async function handleSubmit(payload: CampaignPayload) {
     if (!token) {
